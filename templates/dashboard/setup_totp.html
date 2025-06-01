@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ title }}</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <div class="container">
+        <header class="nav-header">
+            <h1>Flask Jedi App</h1>
+            <nav>
+                <ul>
+                    <li><a href="{{ url_for('main.index') }}">Home</a></li>
+                    <li><a href="{{ url_for('dashboard.dashboard') }}">Dashboard</a></li>
+                    <li><a href="{{ url_for('dashboard.settings') }}" class="active">Settings</a></li>
+                    {% if current_user.is_admin %}
+                        <li><a href="{{ url_for('admin.admin') }}">Admin</a></li>
+                    {% endif %}
+                    <li><a href="{{ url_for('auth.logout') }}">Logout</a></li>
+                </ul>
+            </nav>
+        </header>
+
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="flash-message {{ category }}">
+                        {{ message }}
+                    </div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+
+        <div class="content">
+            <h2>Enable Two-Factor Authentication</h2>
+
+            <div class="setup-totp-container">
+                <p class="info-text">Scan the QR code below with your authenticator app (like Google Authenticator, Authy, etc.) to set up two-factor authentication for your account.</p>
+
+                <div class="qr-container">
+                    <img src="{{ qr_code }}" alt="QR Code for 2FA Setup">
+                </div>
+
+                <p class="manual-code">
+                    If you can't scan the QR code, you can manually enter this secret key into your authenticator app:
+                    <code>{{ totp_secret }}</code>
+                </p>
+
+                <form method="POST" action="{{ url_for('dashboard.verify_totp') }}" class="settings-form">
+                    {{ form.hidden_tag() }}
+                    <div class="form-group">
+                        {{ form.token.label }}
+                        {{ form.token(class="form-control", placeholder="Enter the 6-digit code from your authenticator app") }}
+                        {% if form.token.errors %}
+                            <div class="errors">
+                                {% for error in form.token.errors %}
+                                    <span>{{ error }}</span>
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                    </div>
+                    <button type="submit" class="btn">Verify and Enable 2FA</button>
+                    <a href="{{ url_for('dashboard.settings') }}" class="btn btn-secondary">Cancel</a>
+                </form>
+            </div>
+        </div>
+
+        <footer>
+            <p>&copy; 2025 Jedi Flask App</p>
+        </footer>
+    </div>
+</body>
+</html>

@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ title }}</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <div class="container">
+        <header class="nav-header">
+            <h1>Flask Jedi App</h1>
+            <nav>
+                <ul>
+                    <li><a href="{{ url_for('main.index') }}">Home</a></li>
+                    {% if current_user.is_authenticated %}
+                        <li><a href="{{ url_for('dashboard.dashboard') }}">Dashboard</a></li>
+                        <li><a href="{{ url_for('auth.logout') }}">Logout</a></li>
+                    {% else %}
+                        <li><a href="{{ url_for('auth.login') }}">Login</a></li>
+                        <li><a href="{{ url_for('auth.register') }}">Register</a></li>
+                    {% endif %}
+                </ul>
+            </nav>
+        </header>
+
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="flash-message {{ category }}">
+                        {{ message }}
+                    </div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+
+        <div class="content">
+            <h2>Welcome to Flask Jedi App</h2>
+            {% if current_user.is_authenticated %}
+                <p>You are logged in as: <strong>{{ current_user.username }}</strong></p>
+                <a href="{{ url_for('dashboard.dashboard') }}" class="btn">Go to Dashboard</a>
+            {% else %}
+                <p>Please login to access your dashboard</p>
+                <div class="action-buttons">
+                    <a href="{{ url_for('auth.login') }}" class="btn">Login</a>
+                    <a href="{{ url_for('auth.register') }}" class="btn btn-secondary">Register</a>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</body>
+</html>
+

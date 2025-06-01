@@ -1,0 +1,19 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Internal Server Error</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <div class="container error-page">
+        <div class="error-content">
+            <h1>500</h1>
+            <h2>Internal Server Error</h2>
+            <p>Something went wrong on our end. Our technical team has been notified.</p>
+            <a href="{{ url_for('main.index') }}" class="btn">Return Home</a>
+        </div>
+    </div>
+</body>
+</html>

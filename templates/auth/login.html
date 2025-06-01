@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ title }}</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <div class="container">
+        <header class="nav-header">
+            <h1>Flask Jedi App</h1>
+            <nav>
+                <ul>
+                    <li><a href="{{ url_for('main.index') }}">Home</a></li>
+                    {% if config.get('REGISTRATION_ENABLED', False) %}
+                    <li><a href="{{ url_for('auth.register') }}">Register</a></li>
+                    {% endif %}
+                </ul>
+            </nav>
+        </header>
+
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="flash-message {{ category }}">
+                        {{ message }}
+                    </div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+
+        <div class="auth-form">
+            <h2>Sign In</h2>
+            <form method="POST" action="{{ url_for('auth.login') }}">
+                {{ form.hidden_tag() }}
+                <div class="form-group">
+                    {{ form.username.label }}
+                    {{ form.username(size=64, class="form-control", placeholder="Username or Email") }}
+                    {% for error in form.username.errors %}
+                        <span class="error-message">{{ error }}</span>
+                    {% endfor %}
+                </div>
+                <div class="form-group">
+                    {{ form.password.label }}
+                    {{ form.password(size=32, class="form-control", placeholder="Password") }}
+                    {% for error in form.password.errors %}
+                        <span class="error-message">{{ error }}</span>
+                    {% endfor %}
+                </div>
+                <div class="form-group checkbox">
+                    {{ form.remember_me() }}
+                    {{ form.remember_me.label }}
+                </div>
+                <div class="form-group">
+                    {{ form.submit(class="btn") }}
+                </div>
+            </form>
+            <div class="auth-links">
+                {% if config.get('REGISTRATION_ENABLED', False) %}
+                <p>New user? <a href="{{ url_for('auth.register') }}">Click here to register</a>.</p>
+                {% else %}
+                <p>Registration is currently disabled. Please contact an administrator.</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</body>
+</html>
+

@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ title }}</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <div class="container">
+        <header class="nav-header">
+            <h1>Flask Jedi App</h1>
+            <nav>
+                <ul>
+                    <li><a href="{{ url_for('main.index') }}">Home</a></li>
+                    <li><a href="{{ url_for('dashboard.dashboard') }}">Dashboard</a></li>
+                    <li><a href="{{ url_for('dashboard.settings') }}">Settings</a></li>
+                    {% if current_user.is_admin %}
+                        <li><a href="{{ url_for('admin.admin') }}">Admin</a></li>
+                    {% endif %}
+                    <li><a href="{{ url_for('auth.logout') }}">Logout</a></li>
+                </ul>
+            </nav>
+        </header>
+
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="flash-message {{ category }}">
+                        {{ message }}
+                    </div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+
+        <div class="content">
+            <h2>Dashboard</h2>
+            <div class="dashboard">
+                <div class="user-info">
+                    <h3>Welcome, {{ current_user.username }}!</h3>
+                    <p>Email: {{ current_user.email }}</p>
+                    <p>Account created: {{ current_user.created_at.strftime('%Y-%m-%d') }}</p>
+                    {% if current_user.last_login %}
+                        <p>Last login: {{ current_user.last_login.strftime('%Y-%m-%d %H:%M') }}</p>
+                    {% endif %}
+                    {% if current_user.is_admin %}
+                        <p class="admin-badge">Administrator Account</p>
+                    {% endif %}
+                    <div class="user-actions">
+                        <a href="{{ url_for('dashboard.settings') }}" class="btn">Manage Account Settings</a>
+                    </div>
+                </div>
+
+                <div class="dashboard-content">
+                    <div class="dashboard-card">
+                        <h4>Protected Content</h4>
+                        <p>This is a protected area that only authenticated users can access.</p>
+                    </div>
+
+                    {% if current_user.is_admin %}
+                    <div class="dashboard-card admin-card">
+                        <h4>Admin Section</h4>
+                        <p>This section is only visible to administrators.</p>
+                        <a href="{{ url_for('admin.admin') }}" class="btn">Go to Admin Panel</a>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
+

@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ title }}</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <div class="container">
+        <header class="nav-header">
+            <h1>Disable Two-Factor Authentication</h1>
+            <nav>
+                <ul>
+                    <li><a href="{{ url_for('main.index') }}">Home</a></li>
+                    <li><a href="{{ url_for('dashboard.dashboard') }}">Dashboard</a></li>
+                </ul>
+            </nav>
+        </header>
+
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="flash-message {{ category }}">
+                        {{ message }}
+                    </div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+
+        <div class="auth-form">
+            <h2>Disable Two-Factor Authentication</h2>
+
+            <div class="warning-box">
+                <h3><span class="icon">⚠️</span> Security Warning</h3>
+                <p>You are about to disable two-factor authentication for your account. This will make your account less secure.</p>
+                <p>We strongly recommend keeping two-factor authentication enabled for maximum security.</p>
+            </div>
+
+            <p class="auth-instructions">Please enter your current 6-digit authentication code to confirm and disable two-factor authentication.</p>
+
+            <form method="POST">
+                {{ form.hidden_tag() }}
+                <div class="form-group totp-input">
+                    {{ form.token.label }}
+                    {{ form.token(size=6, class="form-control otp-input", inputmode="numeric", pattern="[0-9]*", autocomplete="one-time-code", placeholder="000000") }}
+                    {% for error in form.token.errors %}
+                        <span class="error-message">{{ error }}</span>
+                    {% endfor %}
+                </div>
+                <div class="form-group">
+                    {{ form.submit(class="btn btn-danger") }}
+                    <a href="{{ url_for('dashboard.dashboard') }}" class="btn btn-secondary">Cancel</a>
+                </div>
+            </form>
+        </div>
+    </div>
+</body>
+</html>
+

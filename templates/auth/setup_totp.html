@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ title }}</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <div class="container">
+        <header class="nav-header">
+            <h1>Setup Two-Factor Authentication</h1>
+            <nav>
+                <ul>
+                    <li><a href="{{ url_for('main.index') }}">Home</a></li>
+                    <li><a href="{{ url_for('dashboard.dashboard') }}">Dashboard</a></li>
+                </ul>
+            </nav>
+        </header>
+
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="flash-message {{ category }}">
+                        {{ message }}
+                    </div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+
+        <div class="auth-form setup-2fa">
+            <h2>Setup Two-Factor Authentication</h2>
+
+            <div class="setup-instructions">
+                <ol>
+                    <li>Install an authenticator app on your mobile device:
+                        <ul>
+                            <li><a href="https://play.google.com/store/apps/details?id=com.google.android.apps.authenticator2" target="_blank">Google Authenticator (Android)</a></li>
+                            <li><a href="https://apps.apple.com/us/app/google-authenticator/id388497605" target="_blank">Google Authenticator (iOS)</a></li>
+                            <li><a href="https://authy.com/download/" target="_blank">Authy</a></li>
+                            <li>Or any other TOTP-compatible authenticator app</li>
+                        </ul>
+                    </li>
+                    <li>Scan the QR code below with your authenticator app</li>
+                    <li>Or manually enter this secret code: <code>{{ secret }}</code></li>
+                    <li>Enter the 6-digit code shown in your app below to verify and complete setup</li>
+                </ol>
+            </div>
+
+            <div class="qr-code-container">
+                <img src="data:image/png;base64,{{ qr_code }}" alt="QR Code for Two-Factor Authentication">
+            </div>
+
+            <form method="POST">
+                {{ form.hidden_tag() }}
+                <div class="form-group totp-input">
+                    {{ form.token.label }}
+                    {{ form.token(size=6, class="form-control otp-input", inputmode="numeric", pattern="[0-9]*", autocomplete="one-time-code", placeholder="000000") }}
+                    {% for error in form.token.errors %}
+                        <span class="error-message">{{ error }}</span>
+                    {% endfor %}
+                </div>
+                <div class="form-group">
+                    {{ form.submit(class="btn") }}
+                    <a href="{{ url_for('dashboard.dashboard') }}" class="btn btn-secondary">Cancel</a>
+                </div>
+            </form>
+
+            <div class="security-tips">
+                <h3>Security Tips</h3>
+                <ul>
+                    <li>Store your secret key in a secure place as a backup</li>
+                    <li>Consider setting up multiple authenticator apps on different devices</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
+
