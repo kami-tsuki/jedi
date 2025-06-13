@@ -1,0 +1,131 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ folder }} - Email - J.E.D.I.{% endblock %}
+
+{% block extra_head %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/email.css') }}">
+{% endblock %}
+
+{% block content %}
+<div class="email-client-container" id="emailApp">
+    <div class="email-sidebar">
+        <div class="email-actions">
+            <a href="{{ url_for('email.compose') }}" class="btn btn-primary compose-btn">
+                <i class="fas fa-pen"></i> Compose
+            </a>
+
+            <a href="{{ url_for('email.setup') }}" class="btn btn-outline settings-btn">
+                <i class="fas fa-cog"></i> Settings
+            </a>
+        </div>
+
+        <div class="folder-list" id="folderList">
+            <div class="folder-heading">
+                <h3>Folders</h3>
+                <span class="refresh-icon" id="refreshFolders">
+                    <i class="fas fa-sync-alt"></i>
+                </span>
+            </div>
+            <ul class="folders">
+                <li class="folder-item loading">
+                    <i class="fas fa-circle-notch fa-spin"></i> Loading folders...
+                </li>
+            </ul>
+        </div>
+    </div>
+
+    <div class="email-main">
+        <div class="email-header">
+            <div class="folder-title">
+                <h2><i class="fas fa-folder"></i> {{ folder }}</h2>
+            </div>
+            <div class="email-search">
+                <form id="searchForm">
+                    <div class="search-container">
+                        <input type="text" id="searchInput" placeholder="Search emails..."
+                               value="{{ search }}">
+                        <button type="submit">
+                            <i class="fas fa-search"></i>
+                        </button>
+                    </div>
+                </form>
+            </div>
+            <div class="email-actions">
+                <button id="refreshEmails" class="action-btn" title="Refresh">
+                    <i class="fas fa-sync-alt"></i>
+                </button>
+            </div>
+        </div>
+
+        <div class="email-list-container">
+            <div id="emailList" class="email-list" data-folder="{{ folder }}" data-page="{{ page }}" data-search="{{ search }}">
+                <div class="loading-indicator">
+                    <i class="fas fa-circle-notch fa-spin"></i>
+                    <span>Loading emails...</span>
+                </div>
+            </div>
+
+            <div id="pagination" class="pagination">
+                <!-- Pagination will be inserted by JavaScript -->
+            </div>
+        </div>
+
+        <div id="noEmails" class="no-emails-message" style="display: none;">
+            <div class="empty-state">
+                <div class="icon">
+                    <i class="fas fa-inbox"></i>
+                </div>
+                <h3>No emails found</h3>
+                <p>This folder is empty or no emails match your search.</p>
+                <button id="clearSearch" class="btn btn-outline" style="display: none;">
+                    <i class="fas fa-times"></i> Clear Search
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Email action modal -->
+<div id="emailActionModal" class="modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3>Email Actions</h3>
+            <span class="close-modal">&times;</span>
+        </div>
+        <div class="modal-body">
+            <div class="action-buttons">
+                <button id="moveEmailBtn" class="modal-btn">
+                    <i class="fas fa-folder-open"></i> Move to Folder
+                </button>
+                <button id="deleteEmailBtn" class="modal-btn modal-btn-danger">
+                    <i class="fas fa-trash"></i> Delete
+                </button>
+            </div>
+            <div id="folderSelectContainer" style="display: none;">
+                <div class="form-group">
+                    <label>Select destination folder:</label>
+                    <select id="folderSelect" class="form-control">
+                        <!-- Folders will be loaded dynamically -->
+                    </select>
+                </div>
+                <button id="confirmMoveBtn" class="modal-btn">
+                    <i class="fas fa-check"></i> Move
+                </button>
+                <button id="cancelMoveBtn" class="modal-btn modal-btn-outline">
+                    <i class="fas fa-times"></i> Cancel
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/email.js') }}"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Initialize the email folder view
+        initializeEmailView();
+    });
+</script>
+{% endblock %}

@@ -7,6 +7,52 @@ from database import db
 import pyotp
 import base64
 import os
+from cryptography.fernet import Fernet
+from cryptography.hazmat.primitives import hashes
+from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
+import json
+
+# Generate a strong encryption key based on a secret
+def generate_key(app_secret, salt=b'jedi_email_encryption'):
+    kdf = PBKDF2HMAC(
+        algorithm=hashes.SHA256(),
+        length=32,
+        salt=salt,
+        iterations=100000,
+    )
+    key = base64.urlsafe_b64encode(kdf.derive(app_secret.encode('utf-8')))
+    return key
+
+# Encryption helper
+class Encryptor:
+    _instance = None
+    _key = None
+
+    @classmethod
+    def get_instance(cls, app_secret=None):
+        if cls._instance is None:
+            if app_secret is None:
+                from flask import current_app
+                app_secret = current_app.config['SECRET_KEY']
+            cls._key = generate_key(app_secret)
+            cls._instance = cls()
+        return cls._instance
+
+    def encrypt(self, data):
+        if not data:
+            return None
+        fernet = Fernet(self._key)
+        return fernet.encrypt(data.encode('utf-8')).decode('utf-8')
+
+    def decrypt(self, encrypted_data):
+        if not encrypted_data:
+            return None
+        try:
+            fernet = Fernet(self._key)
+            return fernet.decrypt(encrypted_data.encode('utf-8')).decode('utf-8')
+        except Exception as e:
+            # If decryption fails, return None
+            return None
 
 class User(db.Model, UserMixin):
     __tablename__ = 'users'
@@ -93,3 +139,70 @@ class User(db.Model, UserMixin):
 def receive_password_hash_set(target, value, oldvalue, initiator):
     """Reset login attempts when password is changed"""
     target.login_attempts = 0
+
+class EmailSettings(db.Model):
+    __tablename__ = 'email_settings'
+
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False, unique=True)
+    _username = db.Column('username', db.String(255), nullable=False)
+    _password = db.Column('password', db.String(512), nullable=False)
+    _imap_server = db.Column('imap_server', db.String(255), nullable=False)
+    imap_port = db.Column(db.Integer, default=993)
+    _smtp_server = db.Column('smtp_server', db.String(255), nullable=False)
+    smtp_port = db.Column(db.Integer, default=587)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    user = db.relationship('User', backref=db.backref('email_settings', uselist=False))
+
+    @property
+    def username(self):
+        """Get the decrypted username"""
+        encryptor = Encryptor.get_instance()
+        return encryptor.decrypt(self._username)
+
+    @username.setter
+    def username(self, value):
+        """Encrypt the username before storing"""
+        encryptor = Encryptor.get_instance()
+        self._username = encryptor.encrypt(value)
+
+    @property
+    def password(self):
+        """Get the decrypted password"""
+        encryptor = Encryptor.get_instance()
+        return encryptor.decrypt(self._password)
+
+    @password.setter
+    def password(self, value):
+        """Encrypt the password before storing"""
+        encryptor = Encryptor.get_instance()
+        self._password = encryptor.encrypt(value)
+
+    @property
+    def imap_server(self):
+        """Get the decrypted IMAP server"""
+        encryptor = Encryptor.get_instance()
+        return encryptor.decrypt(self._imap_server)
+
+    @imap_server.setter
+    def imap_server(self, value):
+        """Encrypt the IMAP server before storing"""
+        encryptor = Encryptor.get_instance()
+        self._imap_server = encryptor.encrypt(value)
+
+    @property
+    def smtp_server(self):
+        """Get the decrypted SMTP server"""
+        encryptor = Encryptor.get_instance()
+        return encryptor.decrypt(self._smtp_server)
+
+    @smtp_server.setter
+    def smtp_server(self, value):
+        """Encrypt the SMTP server before storing"""
+        encryptor = Encryptor.get_instance()
+        self._smtp_server = encryptor.encrypt(value)
+
+    def __repr__(self):
+        return f'<EmailSettings for user {self.user_id}>'

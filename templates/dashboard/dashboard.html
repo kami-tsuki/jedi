@@ -1,73 +1,231 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{{ title }}</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
-</head>
-<body>
-    <div class="container">
-        <header class="nav-header">
-            <h1>Flask Jedi App</h1>
-            <nav>
-                <ul>
-                    <li><a href="{{ url_for('main.index') }}">Home</a></li>
-                    <li><a href="{{ url_for('dashboard.dashboard') }}">Dashboard</a></li>
-                    <li><a href="{{ url_for('dashboard.settings') }}">Settings</a></li>
-                    {% if current_user.is_admin %}
-                        <li><a href="{{ url_for('admin.admin') }}">Admin</a></li>
-                    {% endif %}
-                    <li><a href="{{ url_for('auth.logout') }}">Logout</a></li>
-                </ul>
-            </nav>
-        </header>
+{% extends "base.html" %}
 
-        {% with messages = get_flashed_messages(with_categories=true) %}
-            {% if messages %}
-                {% for category, message in messages %}
-                    <div class="flash-message {{ category }}">
-                        {{ message }}
-                    </div>
-                {% endfor %}
+{% block title %}J.E.D.I. | Dashboard{% endblock %}
+
+{% block extra_head %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/dashboard.css') }}">
+{% endblock %}
+
+{% block content %}
+<div class="dashboard-page">
+    <div class="dashboard-header">
+        <h1 class="welcome-message">Welcome back, <span>{{ current_user.username }}</span>!</h1>
+        <div class="dashboard-actions">
+            <a href="{{ url_for('dashboard.settings') }}" class="btn btn-secondary">
+                <i class="fas fa-cog"></i> Settings
+            </a>
+            {% if current_user.is_admin %}
+            <a href="{{ url_for('admin.admin') }}" class="btn btn-primary">
+                <i class="fas fa-shield-alt"></i> Admin Panel
+            </a>
             {% endif %}
-        {% endwith %}
+        </div>
+    </div>
 
-        <div class="content">
-            <h2>Dashboard</h2>
-            <div class="dashboard">
-                <div class="user-info">
-                    <h3>Welcome, {{ current_user.username }}!</h3>
-                    <p>Email: {{ current_user.email }}</p>
-                    <p>Account created: {{ current_user.created_at.strftime('%Y-%m-%d') }}</p>
-                    {% if current_user.last_login %}
-                        <p>Last login: {{ current_user.last_login.strftime('%Y-%m-%d %H:%M') }}</p>
-                    {% endif %}
-                    {% if current_user.is_admin %}
-                        <p class="admin-badge">Administrator Account</p>
-                    {% endif %}
-                    <div class="user-actions">
-                        <a href="{{ url_for('dashboard.settings') }}" class="btn">Manage Account Settings</a>
+    <div class="dashboard-grid">
+        <!-- User Profile Card -->
+        <div class="user-profile-card">
+            <div class="profile-header">
+                <div class="profile-avatar">
+                    {{ current_user.username[0].upper() }}
+                </div>
+                <div class="profile-details">
+                    <h3>{{ current_user.username }}</h3>
+                    <div class="profile-meta">{{ current_user.email }}</div>
+
+                    <div class="profile-badges">
+                        <div class="badge badge-primary">
+                            <i class="fas fa-user"></i> Member
+                        </div>
+                        {% if current_user.is_admin %}
+                        <div class="badge badge-admin">
+                            <i class="fas fa-shield-alt"></i> Administrator
+                        </div>
+                        {% endif %}
+                        {% if current_user.totp_enabled %}
+                        <div class="badge badge-verified">
+                            <i class="fas fa-shield-check"></i> 2FA Enabled
+                        </div>
+                        {% endif %}
                     </div>
                 </div>
+            </div>
 
-                <div class="dashboard-content">
-                    <div class="dashboard-card">
-                        <h4>Protected Content</h4>
-                        <p>This is a protected area that only authenticated users can access.</p>
-                    </div>
+            <div class="user-stats">
+                <div class="stat-item">
+                    <div class="stat-value">{{ (current_user.last_login.date() - current_user.created_at.date()).days if current_user.last_login else 0 }}</div>
+                    <div class="stat-label">Days active</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-value">{{ current_user.login_count if current_user.login_count else 1 }}</div>
+                    <div class="stat-label">Logins</div>
+                </div>
+            </div>
 
-                    {% if current_user.is_admin %}
-                    <div class="dashboard-card admin-card">
-                        <h4>Admin Section</h4>
-                        <p>This section is only visible to administrators.</p>
-                        <a href="{{ url_for('admin.admin') }}" class="btn">Go to Admin Panel</a>
+            <div class="user-info-list">
+                <div class="user-info-item">
+                    <div class="user-info-label">Account created</div>
+                    <div class="user-info-value">{{ current_user.created_at.strftime('%Y-%m-%d') }}</div>
+                </div>
+                {% if current_user.last_login %}
+                <div class="user-info-item">
+                    <div class="user-info-label">Last login</div>
+                    <div class="user-info-value">{{ current_user.last_login.strftime('%Y-%m-%d %H:%M') }}</div>
+                </div>
+                {% endif %}
+                <div class="user-info-item">
+                    <div class="user-info-label">2FA Status</div>
+                    <div class="user-info-value">{{ "Enabled" if current_user.totp_enabled else "Disabled" }}</div>
+                </div>
+            </div>
+
+            <div class="user-actions">
+                <a href="{{ url_for('dashboard.settings') }}" class="btn btn-primary btn-block">
+                    <i class="fas fa-cog"></i> Manage Account Settings
+                </a>
+            </div>
+        </div>
+
+        <!-- Quick Access -->
+        <div class="dashboard-card">
+            <div class="card-header">
+                <h4><i class="fas fa-bolt"></i> Quick Access</h4>
+            </div>
+            <div class="quick-access">
+                <a href="{{ url_for('dashboard.settings') }}" class="quick-link">
+                    <i class="fas fa-cog"></i>
+                    <span>Settings</span>
+                </a>
+                {% if current_user.is_admin %}
+                <a href="{{ url_for('admin.admin') }}" class="quick-link">
+                    <i class="fas fa-shield-alt"></i>
+                    <span>Admin</span>
+                </a>
+                {% endif %}
+                <a href="{{ url_for('dashboard.monitoring') }}" class="quick-link">
+                    <i class="fas fa-chart-line"></i>
+                    <span>Stats</span>
+                </a>
+                <a href="#" class="quick-link">
+                    <i class="fas fa-user-cog"></i>
+                    <span>Profile</span>
+                </a>
+                <a href="#" class="quick-link">
+                    <i class="fas fa-key"></i>
+                    <span>Security</span>
+                </a>
+                <a href="{{ url_for('auth.logout') }}" class="quick-link">
+                    <i class="fas fa-sign-out-alt"></i>
+                    <span>Logout</span>
+                </a>
+            </div>
+        </div>
+
+        <!-- Recent Activity Card -->
+        <div class="dashboard-card info-card">
+            <div class="card-header">
+                <h4><i class="fas fa-clock"></i> Recent Activity</h4>
+                <div class="card-actions">
+                    <i class="fas fa-sync-alt action-icon" title="Refresh"></i>
+                </div>
+            </div>
+            <div class="activity-feed">
+                <div class="activity-item">
+                    <div class="activity-icon">
+                        <i class="fas fa-sign-in-alt"></i>
                     </div>
-                    {% endif %}
+                    <div class="activity-content">
+                        <div class="activity-title">Successful login</div>
+                        <div class="activity-meta">{{ current_user.last_login.strftime('%Y-%m-%d %H:%M') if current_user.last_login else 'Just now' }}</div>
+                    </div>
+                </div>
+                <div class="activity-item">
+                    <div class="activity-icon">
+                        <i class="fas fa-user-edit"></i>
+                    </div>
+                    <div class="activity-content">
+                        <div class="activity-title">Profile updated</div>
+                        <div class="activity-meta">{{ current_user.created_at.strftime('%Y-%m-%d') }}</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Protected Content Card -->
+        <div class="dashboard-card success-card">
+            <div class="card-header">
+                <h4><i class="fas fa-shield-alt"></i> Protected Content</h4>
+                <div class="card-actions">
+                    <i class="fas fa-info-circle action-icon" title="More info"></i>
+                </div>
+            </div>
+            <div class="card-content">
+                <p>This is a protected area that only authenticated users can access.</p>
+                <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Duis viverra lectus vitae commodo accumsan. Quisque vehicula, velit vel eleifend venenatis, erat ante bibendum nisi, a pellentesque arcu purus vel arcu.</p>
+            </div>
+            <div class="card-footer">
+                <a href="#" class="btn btn-secondary">Learn More</a>
+            </div>
+        </div>
+
+        {% if current_user.is_admin %}
+        <!-- Admin Section Card -->
+        <div class="dashboard-card admin-card">
+            <div class="card-header">
+                <h4><i class="fas fa-crown"></i> Admin Section</h4>
+                <div class="card-actions">
+                    <i class="fas fa-external-link-alt action-icon" title="Open in new tab"></i>
+                </div>
+            </div>
+            <div class="card-content">
+                <p>This special section is only visible to administrators.</p>
+                <p>From here you can manage users, monitor system performance, and configure application settings.</p>
+            </div>
+            <div class="card-footer">
+                <a href="{{ url_for('admin.admin') }}" class="btn btn-primary">Go to Admin Panel</a>
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- System Status Card -->
+        <div class="dashboard-card">
+            <div class="card-header">
+                <h4><i class="fas fa-heartbeat"></i> System Status</h4>
+            </div>
+            <div class="user-stats">
+                <div class="stat-item">
+                    <div class="stat-value" style="color: var(--success-color);">Online</div>
+                    <div class="stat-label">Status</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-value">99.9%</div>
+                    <div class="stat-label">Uptime</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-value">54ms</div>
+                    <div class="stat-label">Response</div>
                 </div>
             </div>
         </div>
     </div>
-</body>
-</html>
+</div>
+{% endblock %}
 
+{% block scripts %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Animation for dashboard cards
+        const cards = document.querySelectorAll('.dashboard-card');
+        cards.forEach((card, index) => {
+            card.style.opacity = '0';
+            card.style.transform = 'translateY(20px)';
+
+            setTimeout(() => {
+                card.style.transition = 'opacity 0.5s ease, transform 0.5s ease';
+                card.style.opacity = '1';
+                card.style.transform = 'translateY(0)';
+            }, 100 * (index + 1));
+        });
+    });
+</script>
+{% endblock %}

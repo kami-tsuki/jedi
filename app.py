@@ -1,5 +1,5 @@
 import os
-from datetime import timedelta
+from datetime import timedelta, datetime
 from flask import Flask, render_template, request, redirect, url_for, g
 from flask_compress import Compress
 from flask_caching import Cache
@@ -16,6 +16,8 @@ from endpoints.main import main_bp, cache as main_cache
 from endpoints.auth import auth_bp, limiter as auth_limiter
 from endpoints.dashboard import dashboard_bp
 from endpoints.admin import admin_bp
+from endpoints.monitoring import monitoring_bp
+from endpoints.email_client import email_bp, cache as email_cache, limiter as email_limiter
 
 # Define public endpoints that don't require authentication
 PUBLIC_ENDPOINTS = [
@@ -109,6 +111,12 @@ def create_app(config=None):
     # Configure caching
     cache = Cache(app)
     main_cache.init_app(app)  # Initialize cache in main blueprint
+    email_cache.init_app(app)  # Initialize cache in email client blueprint
+
+    # Add current year to all templates
+    @app.context_processor
+    def inject_now():
+        return {'now': datetime.now()}
 
     # Enable compression
     compress = Compress(app)
@@ -121,12 +129,15 @@ def create_app(config=None):
         storage_uri="memory://",
     )
     auth_limiter.init_app(app)  # Initialize limiter in auth blueprint
+    email_limiter.init_app(app)  # Initialize limiter in email client blueprint
 
     # Register blueprints
     app.register_blueprint(main_bp)
     app.register_blueprint(auth_bp)
     app.register_blueprint(dashboard_bp)
     app.register_blueprint(admin_bp)
+    app.register_blueprint(monitoring_bp)
+    app.register_blueprint(email_bp)
 
     # Error handlers
     @app.errorhandler(404)
@@ -182,4 +193,3 @@ if __name__ == '__main__':
     port = int(os.getenv('PORT', 5000))
     debug = os.getenv('FLASK_DEBUG', '0') == '1'
     app.run(host=host, port=port, debug=debug)
-

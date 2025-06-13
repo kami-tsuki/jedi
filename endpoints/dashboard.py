@@ -5,6 +5,7 @@ import functools
 import pyqrcode
 import io
 import base64
+import datetime
 
 from database import db
 from database.identity.models import User
@@ -20,7 +21,15 @@ dashboard_bp = Blueprint(
 @dashboard_bp.route('/')
 @login_required
 def dashboard():
-    return render_template('dashboard/dashboard.html', title='Dashboard')
+    now = datetime.datetime.now()
+    return render_template('dashboard/dashboard.html', title='Dashboard', now=now)
+
+@dashboard_bp.route('/monitoring')
+@login_required
+def monitoring():
+    """System monitoring dashboard page"""
+    now = datetime.datetime.now()
+    return render_template('dashboard/monitoring.html', title='System Monitoring', now=now)
 
 @dashboard_bp.route('/settings', methods=['GET'])
 @login_required
@@ -30,13 +39,15 @@ def settings():
     email_form = UpdateEmailForm()
     password_form = UpdatePasswordForm()
     disable_totp_form = DisableTOTPForm()
+    now = datetime.datetime.now()
 
     return render_template('dashboard/settings.html',
                           title='User Settings',
                           username_form=username_form,
                           email_form=email_form,
                           password_form=password_form,
-                          disable_totp_form=disable_totp_form)
+                          disable_totp_form=disable_totp_form,
+                          now=now)
 
 @dashboard_bp.route('/settings/username', methods=['POST'])
 @fresh_login_required
@@ -190,4 +201,3 @@ def disable_totp():
                 flash(f"{field}: {error}", 'error')
 
     return redirect(url_for('dashboard.settings'))
-

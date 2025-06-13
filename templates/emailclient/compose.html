@@ -1,0 +1,195 @@
+{% extends 'base.html' %}
+
+{% block title %}Compose Email - J.E.D.I.{% endblock %}
+
+{% block extra_head %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/email.css') }}">
+{% endblock %}
+
+{% block content %}
+<div class="email-client-container" id="emailApp">
+    <div class="email-sidebar">
+        <div class="email-actions">
+            <a href="{{ url_for('email.inbox') }}" class="btn btn-outline back-btn">
+                <i class="fas fa-arrow-left"></i> Back
+            </a>
+
+            <a href="{{ url_for('email.setup') }}" class="btn btn-outline settings-btn">
+                <i class="fas fa-cog"></i> Settings
+            </a>
+        </div>
+
+        <div class="folder-list" id="folderList">
+            <div class="folder-heading">
+                <h3>Folders</h3>
+                <span class="refresh-icon" id="refreshFolders">
+                    <i class="fas fa-sync-alt"></i>
+                </span>
+            </div>
+            <ul class="folders">
+                <li class="folder-item loading">
+                    <i class="fas fa-circle-notch fa-spin"></i> Loading folders...
+                </li>
+            </ul>
+        </div>
+    </div>
+
+    <div class="email-main">
+        <div class="compose-container">
+            <form id="composeForm" class="compose-form">
+                <div class="compose-header">
+                    <h2><i class="fas fa-pen"></i> Compose New Email</h2>
+                </div>
+
+                <div class="form-group">
+                    <label for="to">To:</label>
+                    <input type="text" id="to" name="to" class="form-control" required>
+                </div>
+
+                <div class="form-group">
+                    <div class="cc-bcc-toggle">
+                        <button type="button" id="showCcBtn" class="toggle-btn">Cc</button>
+                        <button type="button" id="showBccBtn" class="toggle-btn">Bcc</button>
+                    </div>
+                </div>
+
+                <div id="ccField" class="form-group" style="display: none;">
+                    <label for="cc">Cc:</label>
+                    <input type="text" id="cc" name="cc" class="form-control">
+                </div>
+
+                <div id="bccField" class="form-group" style="display: none;">
+                    <label for="bcc">Bcc:</label>
+                    <input type="text" id="bcc" name="bcc" class="form-control">
+                </div>
+
+                <div class="form-group">
+                    <label for="subject">Subject:</label>
+                    <input type="text" id="subject" name="subject" class="form-control" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="body">Message:</label>
+                    <div class="editor-toolbar">
+                        <button type="button" class="format-btn" data-format="bold" title="Bold">
+                            <i class="fas fa-bold"></i>
+                        </button>
+                        <button type="button" class="format-btn" data-format="italic" title="Italic">
+                            <i class="fas fa-italic"></i>
+                        </button>
+                        <button type="button" class="format-btn" data-format="underline" title="Underline">
+                            <i class="fas fa-underline"></i>
+                        </button>
+                        <span class="toolbar-divider"></span>
+                        <button type="button" class="format-btn" data-format="justifyLeft" title="Align Left">
+                            <i class="fas fa-align-left"></i>
+                        </button>
+                        <button type="button" class="format-btn" data-format="justifyCenter" title="Align Center">
+                            <i class="fas fa-align-center"></i>
+                        </button>
+                        <button type="button" class="format-btn" data-format="justifyRight" title="Align Right">
+                            <i class="fas fa-align-right"></i>
+                        </button>
+                        <span class="toolbar-divider"></span>
+                        <button type="button" class="format-btn" data-format="insertOrderedList" title="Numbered List">
+                            <i class="fas fa-list-ol"></i>
+                        </button>
+                        <button type="button" class="format-btn" data-format="insertUnorderedList" title="Bullet List">
+                            <i class="fas fa-list-ul"></i>
+                        </button>
+                        <span class="toolbar-divider"></span>
+                        <button type="button" class="format-btn" data-format="createLink" title="Insert Link">
+                            <i class="fas fa-link"></i>
+                        </button>
+                        <button type="button" id="plainTextToggle" class="format-btn" title="Toggle HTML/Plain Text">
+                            <i class="fas fa-code"></i>
+                        </button>
+                    </div>
+                    <div id="richTextEditor" class="rich-text-editor" contenteditable="true"></div>
+                    <textarea id="plainTextEditor" class="plain-text-editor" style="display: none;"></textarea>
+                    <input type="hidden" id="bodyContent" name="body">
+                    <input type="hidden" id="htmlContent" name="html_body">
+                </div>
+
+                <div id="attachmentsContainer" class="attachments-container">
+                    <div class="form-group">
+                        <label for="attachments"><i class="fas fa-paperclip"></i> Attachments</label>
+                        <div class="attachment-dropzone" id="attachmentDropzone">
+                            <input type="file" id="attachments" name="attachments" class="file-input" multiple>
+                            <div class="dropzone-content">
+                                <i class="fas fa-cloud-upload-alt"></i>
+                                <p>Drop files here or click to select</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div id="attachmentsList" class="attachments-list"></div>
+                </div>
+
+                <div class="compose-actions">
+                    <button type="submit" id="sendBtn" class="btn btn-primary">
+                        <i class="fas fa-paper-plane"></i> Send
+                    </button>
+                    <button type="button" id="saveDraftBtn" class="btn btn-outline">
+                        <i class="fas fa-save"></i> Save Draft
+                    </button>
+                    <button type="button" id="discardBtn" class="btn btn-outline btn-danger">
+                        <i class="fas fa-trash"></i> Discard
+                    </button>
+                </div>
+            </form>
+
+            <!-- Loading overlay for sending -->
+            <div id="sendingOverlay" class="sending-overlay" style="display: none;">
+                <div class="overlay-content">
+                    <i class="fas fa-paper-plane sending-icon"></i>
+                    <p>Sending your email...</p>
+                    <div class="loading-bar"><div class="progress"></div></div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Link dialog -->
+<div id="linkDialog" class="modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3>Insert Link</h3>
+            <span class="close-modal">&times;</span>
+        </div>
+        <div class="modal-body">
+            <div class="form-group">
+                <label for="linkUrl">URL:</label>
+                <input type="url" id="linkUrl" class="form-control" placeholder="https://">
+            </div>
+            <div class="form-group">
+                <label for="linkText">Text:</label>
+                <input type="text" id="linkText" class="form-control" placeholder="Link text">
+            </div>
+            <div class="modal-actions">
+                <button id="insertLinkBtn" class="btn btn-primary">Insert</button>
+                <button id="cancelLinkBtn" class="btn btn-outline">Cancel</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/email.js') }}"></script>
+<script src="{{ url_for('static', filename='js/email-compose.js') }}"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Initialize compose functionality
+        initComposeEmail({
+            replyTo: "{{ reply_to }}",
+            replyAll: {{ 'true' if reply_all else 'false' }},
+            forward: "{{ forward }}",
+            folder: "{{ folder }}"
+        });
+
+        // Load folders in sidebar
+        loadFolders();
+    });
+</script>
+{% endblock %}

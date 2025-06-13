@@ -1,0 +1,142 @@
+{% extends 'base.html' %}
+
+{% block title %}View Email - J.E.D.I.{% endblock %}
+
+{% block extra_head %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/email.css') }}">
+{% endblock %}
+
+{% block content %}
+<div class="email-client-container" id="emailApp">
+    <div class="email-sidebar">
+        <div class="email-actions">
+            <a href="{{ url_for('email.compose') }}" class="btn btn-primary compose-btn">
+                <i class="fas fa-pen"></i> Compose
+            </a>
+
+            <a href="{{ url_for('email.setup') }}" class="btn btn-outline settings-btn">
+                <i class="fas fa-cog"></i> Settings
+            </a>
+        </div>
+
+        <div class="folder-list" id="folderList">
+            <div class="folder-heading">
+                <h3>Folders</h3>
+                <span class="refresh-icon" id="refreshFolders">
+                    <i class="fas fa-sync-alt"></i>
+                </span>
+            </div>
+            <ul class="folders">
+                <li class="folder-item loading">
+                    <i class="fas fa-circle-notch fa-spin"></i> Loading folders...
+                </li>
+            </ul>
+        </div>
+    </div>
+
+    <div class="email-main">
+        <!-- Email View Header -->
+        <div class="email-view-header">
+            <div class="header-actions">
+                <a href="{{ url_for('email.inbox', folder=folder) }}" class="btn btn-outline btn-sm back-btn">
+                    <i class="fas fa-arrow-left"></i> Back to {{ folder }}
+                </a>
+                <div class="action-buttons">
+                    <button id="replyBtn" class="btn btn-outline btn-sm">
+                        <i class="fas fa-reply"></i> Reply
+                    </button>
+                    <button id="replyAllBtn" class="btn btn-outline btn-sm">
+                        <i class="fas fa-reply-all"></i> Reply All
+                    </button>
+                    <button id="forwardBtn" class="btn btn-outline btn-sm">
+                        <i class="fas fa-share"></i> Forward
+                    </button>
+                    <button id="deleteBtn" class="btn btn-outline btn-sm btn-danger">
+                        <i class="fas fa-trash"></i> Delete
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Email Content Area -->
+        <div class="email-content-container">
+            <div id="emailLoading" class="loading-container">
+                <div class="loading-spinner">
+                    <i class="fas fa-circle-notch fa-spin"></i>
+                </div>
+                <p>Loading email...</p>
+            </div>
+
+            <div id="emailContent" class="email-content" style="display: none;" data-folder="{{ folder }}" data-email-id="{{ email_id }}">
+                <div class="email-metadata">
+                    <h2 id="emailSubject" class="email-subject">Loading subject...</h2>
+
+                    <div class="email-info">
+                        <div class="sender-info">
+                            <span class="label">From:</span>
+                            <span id="emailFrom" class="value">Loading...</span>
+                        </div>
+                        <div class="recipient-info">
+                            <span class="label">To:</span>
+                            <span id="emailTo" class="value">Loading...</span>
+                        </div>
+                        <div id="emailCcContainer" class="cc-info" style="display: none;">
+                            <span class="label">CC:</span>
+                            <span id="emailCc" class="value">Loading...</span>
+                        </div>
+                        <div class="date-info">
+                            <span class="label">Date:</span>
+                            <span id="emailDate" class="value">Loading...</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="emailAttachments" class="email-attachments" style="display: none;">
+                    <h3><i class="fas fa-paperclip"></i> Attachments</h3>
+                    <div class="attachment-list"></div>
+                </div>
+
+                <div class="email-body">
+                    <div id="emailBodyHtml" class="email-body-html"></div>
+                    <pre id="emailBodyText" class="email-body-text" style="display: none;"></pre>
+                    <div class="view-toggle">
+                        <button id="toggleViewBtn" class="btn btn-sm btn-outline">
+                            <i class="fas fa-code"></i> View Plain Text
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <div id="emailError" class="error-container" style="display: none;">
+                <div class="error-icon">
+                    <i class="fas fa-exclamation-triangle"></i>
+                </div>
+                <h3>Error Loading Email</h3>
+                <p id="errorMessage">There was a problem loading this email.</p>
+                <div class="error-actions">
+                    <button id="retryButton" class="btn btn-primary">
+                        <i class="fas fa-redo"></i> Retry
+                    </button>
+                    <a href="{{ url_for('email.inbox', folder=folder) }}" class="btn btn-outline">
+                        <i class="fas fa-arrow-left"></i> Back to {{ folder }}
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/email.js') }}"></script>
+<script src="{{ url_for('static', filename='js/email-view.js') }}"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Initialize folder list
+        loadFolders();
+
+        // Load email content
+        loadEmailContent('{{ folder }}', '{{ email_id }}');
+    });
+</script>
+{% endblock %}

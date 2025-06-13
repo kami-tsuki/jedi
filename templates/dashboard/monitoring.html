@@ -1,0 +1,376 @@
+{% extends "base.html" %}
+
+{% block title %}J.E.D.I. | System Monitoring{% endblock %}
+
+{% block extra_head %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/monitoring.css') }}">
+{% endblock %}
+
+{% block content %}
+<div class="monitoring-container">
+    <div class="monitoring-header">
+        <h1>System Monitoring</h1>
+        <p>Real-time server metrics and performance analytics</p>
+    </div>
+
+    <!-- Tab Navigation -->
+    <div class="monitoring-tabs">
+        <div class="tab-link active" data-tab="system-tab">System Overview</div>
+        <div class="tab-link" data-tab="processes-tab">Processes</div>
+        <div class="tab-link" data-tab="docker-tab">Docker</div>
+        <div class="tab-link" data-tab="logs-tab">System Logs</div>
+    </div>
+
+    <!-- System Tab Content -->
+    <div id="system-tab" class="monitoring-tab-content">
+        <div class="dashboard-grid">
+            <!-- System Overview Card -->
+            <div class="monitor-card wide-card">
+                <div class="card-header">
+                    <h2>System Overview</h2>
+                </div>
+                <div class="card-body">
+                    <div class="metric-row">
+                        <div class="metric-box">
+                            <div class="metric-title">Platform</div>
+                            <div class="system-info-badge">
+                                <i class="fas fa-server"></i>
+                                <span id="platform">Loading...</span>
+                            </div>
+                        </div>
+                        <div class="metric-box">
+                            <div class="metric-title">Python Version</div>
+                            <div class="system-info-badge">
+                                <i class="fas fa-code"></i>
+                                <span id="python-version">Loading...</span>
+                            </div>
+                        </div>
+                        <div class="metric-box">
+                            <div class="metric-title">Uptime</div>
+                            <div class="metric-value" id="uptime">Loading...</div>
+                        </div>
+                    </div>
+                    <div class="metric-row">
+                        <div class="metric-box">
+                            <div class="metric-title">Hostname</div>
+                            <div class="system-info-badge">
+                                <i class="fas fa-network-wired"></i>
+                                <span id="hostname">Loading...</span>
+                            </div>
+                        </div>
+                        <div class="metric-box">
+                            <div class="metric-title">OS Version</div>
+                            <div class="system-info-badge">
+                                <i class="fas fa-laptop"></i>
+                                <span id="os-version">Loading...</span>
+                            </div>
+                        </div>
+                        <div class="metric-box">
+                            <div class="metric-title">Boot Time</div>
+                            <div class="metric-value" id="boot-time">Loading...</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- CPU Usage Card -->
+            <div class="monitor-card">
+                <div class="card-header">
+                    <h2>CPU Usage</h2>
+                </div>
+                <div class="card-body">
+                    <div class="chart-container">
+                        <div class="loading-overlay">
+                            <div class="spinner"></div>
+                        </div>
+                        <img id="cpu-chart" class="chart-img" src="" alt="CPU Usage Chart">
+                    </div>
+                    <div class="metric-row">
+                        <div class="metric-box">
+                            <div class="metric-title">Physical Cores</div>
+                            <div class="metric-value" id="physical-cores">-</div>
+                        </div>
+                        <div class="metric-box">
+                            <div class="metric-title">Logical Cores</div>
+                            <div class="metric-value" id="logical-cores">-</div>
+                        </div>
+                    </div>
+                    <div class="metric-row">
+                        <div class="metric-box">
+                            <div class="metric-title">CPU Frequency</div>
+                            <div class="metric-value" id="cpu-frequency">-</div>
+                        </div>
+                        <div class="metric-box">
+                            <div class="metric-title">Total CPU Usage</div>
+                            <div class="metric-value" id="total-cpu-usage">-</div>
+                            <span id="cpu-trend"></span>
+                        </div>
+                    </div>
+                    <div class="metric-box">
+                        <div class="metric-title">CPU Model</div>
+                        <div class="system-info-badge">
+                            <i class="fas fa-microchip"></i>
+                            <span id="cpu-model">Loading...</span>
+                        </div>
+                    </div>
+                    <div class="metric-box">
+                        <div class="metric-title">CPU Temperature</div>
+                        <div class="metric-value" id="cpu-temperature">-</div>
+                    </div>
+
+                    <h3>Core Usage</h3>
+                    <div id="core-usage-container" class="core-usage-container">
+                        <div class="loading-spinner"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Memory Usage Card -->
+            <div class="monitor-card">
+                <div class="card-header">
+                    <h2>Memory Usage</h2>
+                </div>
+                <div class="card-body">
+                    <div class="chart-container">
+                        <div class="loading-overlay">
+                            <div class="spinner"></div>
+                        </div>
+                        <img id="memory-chart" class="chart-img" src="" alt="Memory Usage Chart">
+                    </div>
+                    <div class="metric-row">
+                        <div class="metric-box">
+                            <div class="metric-title">Total Memory</div>
+                            <div class="metric-value" id="total-memory">-</div>
+                        </div>
+                        <div class="metric-box">
+                            <div class="metric-title">Used Memory</div>
+                            <div class="metric-value" id="used-memory">-</div>
+                        </div>
+                    </div>
+                    <div class="metric-row">
+                        <div class="metric-box">
+                            <div class="metric-title">Available Memory</div>
+                            <div class="metric-value" id="available-memory">-</div>
+                        </div>
+                        <div class="metric-box">
+                            <div class="metric-title">Memory Usage</div>
+                            <div class="metric-value" id="memory-percent">-</div>
+                            <span id="memory-trend"></span>
+                        </div>
+                    </div>
+
+                    <h3>Swap Memory</h3>
+                    <div class="metric-row">
+                        <div class="metric-box">
+                            <div class="metric-title">Total Swap</div>
+                            <div class="metric-value" id="swap-total">-</div>
+                        </div>
+                        <div class="metric-box">
+                            <div class="metric-title">Used Swap</div>
+                            <div class="metric-value" id="swap-used">-</div>
+                        </div>
+                        <div class="metric-box">
+                            <div class="metric-title">Free Swap</div>
+                            <div class="metric-value" id="swap-free">-</div>
+                        </div>
+                        <div class="metric-box">
+                            <div class="metric-title">Swap Usage</div>
+                            <div class="metric-value" id="swap-percent">-</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Disk Usage Card -->
+            <div class="monitor-card wide-card">
+                <div class="card-header">
+                    <h2>Disk Usage</h2>
+                </div>
+                <div class="card-body">
+                    <div class="chart-container">
+                        <div class="loading-overlay">
+                            <div class="spinner"></div>
+                        </div>
+                        <img id="diskio-chart" class="chart-img" src="" alt="Disk I/O Chart">
+                    </div>
+                    <div class="table-responsive">
+                        <table class="monitor-table" id="disk-table">
+                            <thead>
+                                <tr>
+                                    <th>Device</th>
+                                    <th>Mount Point</th>
+                                    <th>Type</th>
+                                    <th>Total</th>
+                                    <th>Used</th>
+                                    <th>Free</th>
+                                    <th>Usage</th>
+                                    <th>I/O</th>
+                                </tr>
+                            </thead>
+                            <tbody id="disk-stats">
+                                <tr>
+                                    <td colspan="8" class="text-center">Loading disk information...</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Network Statistics Card -->
+            <div class="monitor-card wide-card">
+                <div class="card-header">
+                    <h2>Network Statistics</h2>
+                </div>
+                <div class="card-body">
+                    <div class="chart-container">
+                        <div class="loading-overlay">
+                            <div class="spinner"></div>
+                        </div>
+                        <img id="network-chart" class="chart-img" src="" alt="Network Usage Chart">
+                    </div>
+                    <div class="metric-row">
+                        <div class="metric-box">
+                            <div class="metric-title">Total Bytes Received</div>
+                            <div class="metric-value" id="total-bytes-received">-</div>
+                            <span id="received-trend"></span>
+                        </div>
+                        <div class="metric-box">
+                            <div class="metric-title">Total Bytes Sent</div>
+                            <div class="metric-value" id="total-bytes-sent">-</div>
+                            <span id="sent-trend"></span>
+                        </div>
+                    </div>
+                    <div class="table-responsive">
+                        <table class="monitor-table" id="network-table">
+                            <thead>
+                                <tr>
+                                    <th>Interface</th>
+                                    <th>Sent</th>
+                                    <th>Received</th>
+                                    <th>Packets Sent</th>
+                                    <th>Packets Received</th>
+                                    <th>Errors</th>
+                                    <th>Dropped</th>
+                                </tr>
+                            </thead>
+                            <tbody id="network-stats">
+                                <tr>
+                                    <td colspan="7" class="text-center">Loading network information...</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Processes Tab Content -->
+    <div id="processes-tab" class="monitoring-tab-content">
+        <div class="monitor-card wide-card">
+            <div class="card-header">
+                <h2>System Processes</h2>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="monitor-table" id="process-table">
+                        <thead>
+                            <tr>
+                                <th>PID</th>
+                                <th>Name</th>
+                                <th>User</th>
+                                <th>CPU %</th>
+                                <th>Memory %</th>
+                                <th>Memory</th>
+                                <th>Runtime</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody id="process-tbody">
+                            <tr>
+                                <td colspan="8" class="text-center">Loading process information...</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Docker Containers Tab Content -->
+    <div id="docker-tab" class="monitoring-tab-content">
+        <div class="monitor-card wide-card">
+            <div class="card-header">
+                <h2>Docker Information</h2>
+            </div>
+            <div class="card-body">
+                <div class="metric-row">
+                    <div class="metric-box">
+                        <div class="metric-title">Total Containers</div>
+                        <div class="metric-value" id="total-containers">-</div>
+                    </div>
+                    <div class="metric-box">
+                        <div class="metric-title">Running Containers</div>
+                        <div class="metric-value" id="running-containers">-</div>
+                    </div>
+                    <div class="metric-box">
+                        <div class="metric-title">Docker Version</div>
+                        <div class="metric-value" id="docker-version">-</div>
+                    </div>
+                    <div class="metric-box">
+                        <div class="metric-title">API Version</div>
+                        <div class="metric-value" id="docker-api-version">-</div>
+                    </div>
+                </div>
+                <div id="docker-status"></div>
+                <div class="table-responsive">
+                    <table class="monitor-table" id="docker-table">
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Name</th>
+                                <th>Image</th>
+                                <th>Status</th>
+                                <th>CPU %</th>
+                                <th>Memory %</th>
+                                <th>Memory Usage</th>
+                                <th>Uptime</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="docker-stats">
+                            <tr>
+                                <td colspan="9" class="text-center">Loading container information...</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- System Logs Tab Content -->
+    <div id="logs-tab" class="monitoring-tab-content">
+        <div class="monitor-card wide-card">
+            <div class="card-header">
+                <h2>System Logs</h2>
+            </div>
+            <div class="card-body">
+                <div id="logs-container">
+                    <div class="loading-spinner centered"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Global Refresh Button -->
+    <button id="global-refresh" class="refresh-btn" title="Refresh All Data">
+        <i class="fas fa-sync-alt"></i>
+    </button>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script type="text/javascript" src="{{ url_for('static', filename='js/monitoring.js') }}"></script>
+{% endblock %}

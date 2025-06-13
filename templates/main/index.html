@@ -1,53 +1,298 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{{ title }}</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
-</head>
-<body>
-    <div class="container">
-        <header class="nav-header">
-            <h1>Flask Jedi App</h1>
-            <nav>
-                <ul>
-                    <li><a href="{{ url_for('main.index') }}">Home</a></li>
-                    {% if current_user.is_authenticated %}
-                        <li><a href="{{ url_for('dashboard.dashboard') }}">Dashboard</a></li>
-                        <li><a href="{{ url_for('auth.logout') }}">Logout</a></li>
-                    {% else %}
-                        <li><a href="{{ url_for('auth.login') }}">Login</a></li>
-                        <li><a href="{{ url_for('auth.register') }}">Register</a></li>
-                    {% endif %}
-                </ul>
-            </nav>
-        </header>
+{% extends "base.html" %}
 
-        {% with messages = get_flashed_messages(with_categories=true) %}
-            {% if messages %}
-                {% for category, message in messages %}
-                    <div class="flash-message {{ category }}">
-                        {{ message }}
-                    </div>
-                {% endfor %}
-            {% endif %}
-        {% endwith %}
+{% block title %}J.E.D.I. | Home{% endblock %}
 
-        <div class="content">
-            <h2>Welcome to Flask Jedi App</h2>
-            {% if current_user.is_authenticated %}
-                <p>You are logged in as: <strong>{{ current_user.username }}</strong></p>
-                <a href="{{ url_for('dashboard.dashboard') }}" class="btn">Go to Dashboard</a>
-            {% else %}
-                <p>Please login to access your dashboard</p>
-                <div class="action-buttons">
-                    <a href="{{ url_for('auth.login') }}" class="btn">Login</a>
-                    <a href="{{ url_for('auth.register') }}" class="btn btn-secondary">Register</a>
+{% block extra_head %}
+<style>
+    /* Home page specific styles */
+    .hero-section {
+        text-align: center;
+        padding: 4rem 1rem;
+        background: linear-gradient(135deg, rgba(110, 7, 243, 0.1), rgba(3, 104, 255, 0.05));
+        border-radius: var(--border-radius);
+        margin-bottom: 2rem;
+    }
+
+    .hero-title {
+        font-size: 3rem;
+        margin-bottom: 1rem;
+        background: linear-gradient(45deg, var(--primary-color), var(--secondary-color));
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        display: inline-block;
+    }
+
+    .hero-subtitle {
+        font-size: 1.25rem;
+        margin-bottom: 2rem;
+        color: var(--text-secondary);
+        max-width: 700px;
+        margin-left: auto;
+        margin-right: auto;
+    }
+
+    .user-welcome {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        margin: 2rem 0;
+    }
+
+    .welcome-card {
+        display: flex;
+        align-items: center;
+        background-color: var(--light-color);
+        padding: 1.5rem;
+        border-radius: var(--border-radius);
+        box-shadow: var(--shadow-md);
+        margin-bottom: 1.5rem;
+        max-width: 550px;
+        width: 100%;
+        transition: var(--transition);
+    }
+
+    .welcome-card:hover {
+        transform: translateY(-5px);
+        box-shadow: var(--shadow-lg);
+    }
+
+    .welcome-icon {
+        width: 60px;
+        height: 60px;
+        border-radius: 50%;
+        background: linear-gradient(45deg, var(--primary-color), var(--secondary-color));
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        margin-right: 1.5rem;
+        flex-shrink: 0;
+    }
+
+    .welcome-icon i {
+        font-size: 1.75rem;
+        color: white;
+    }
+
+    .welcome-text {
+        flex: 1;
+    }
+
+    .welcome-text h2 {
+        margin-top: 0;
+        margin-bottom: 0.5rem;
+        font-size: 1.5rem;
+    }
+
+    .username {
+        color: var(--primary-color);
+    }
+
+    .welcome-text p {
+        margin: 0;
+        color: var(--text-secondary);
+    }
+
+    .cta-section {
+        margin: 2rem 0;
+    }
+
+    .cta-text {
+        font-size: 1.25rem;
+        margin-bottom: 1.5rem;
+    }
+
+    .action-buttons {
+        display: flex;
+        justify-content: center;
+        gap: 1rem;
+    }
+
+    .btn-lg {
+        padding: 1rem 2rem;
+        font-size: 1.1rem;
+    }
+
+    .features-section {
+        padding: 3rem 0;
+    }
+
+    .section-title {
+        text-align: center;
+        margin-bottom: 3rem;
+        font-size: 2rem;
+        color: var(--dark-color);
+    }
+
+    .feature-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+        gap: 2rem;
+    }
+
+    .feature-card {
+        background-color: var(--light-color);
+        border-radius: var(--border-radius);
+        padding: 2rem;
+        text-align: center;
+        box-shadow: var(--shadow-md);
+        transition: var(--transition);
+        height: 100%;
+    }
+
+    .feature-card:hover {
+        transform: translateY(-10px);
+        box-shadow: var(--shadow-lg);
+    }
+
+    .feature-icon {
+        width: 80px;
+        height: 80px;
+        border-radius: 50%;
+        background: linear-gradient(45deg, rgba(110, 7, 243, 0.1), rgba(3, 104, 255, 0.1));
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        margin: 0 auto 1.5rem;
+    }
+
+    .feature-icon i {
+        font-size: 2rem;
+        background: linear-gradient(45deg, var(--primary-color), var(--secondary-color));
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+    }
+
+    .feature-card h3 {
+        margin-top: 0;
+        margin-bottom: 1rem;
+        color: var(--dark-color);
+    }
+
+    .feature-card p {
+        color: var(--text-secondary);
+        margin: 0;
+    }
+
+    .testimonials-section {
+        background-color: var(--grey-color);
+        padding: 4rem 0;
+        margin-top: 3rem;
+    }
+
+    @media (max-width: 768px) {
+        .hero-title {
+            font-size: 2rem;
+        }
+
+        .action-buttons {
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .btn-lg {
+            width: 100%;
+            max-width: 300px;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="hero-section">
+    <h1 class="hero-title">Welcome to J.E.D.I.</h1>
+    <p class="hero-subtitle">Just Enough Device Interface - The smart way to manage your digital life</p>
+
+    {% if current_user.is_authenticated %}
+        <div class="user-welcome">
+            <div class="welcome-card">
+                <div class="welcome-icon">
+                    <i class="fas fa-user-circle"></i>
                 </div>
-            {% endif %}
+                <div class="welcome-text">
+                    <h2>Welcome back, <span class="username">{{ current_user.username }}</span></h2>
+                    <p>Continue your journey to digital mastery</p>
+                </div>
+            </div>
+            <a href="{{ url_for('dashboard.dashboard') }}" class="btn btn-primary btn-lg">
+                <i class="fas fa-tachometer-alt"></i> Go to Dashboard
+            </a>
+        </div>
+    {% else %}
+        <div class="cta-section">
+            <p class="cta-text">Join our community and take control of your digital environment</p>
+            <div class="action-buttons">
+                <a href="{{ url_for('auth.login') }}" class="btn btn-primary btn-lg">
+                    <i class="fas fa-sign-in-alt"></i> Login
+                </a>
+                <a href="{{ url_for('auth.register') }}" class="btn btn-secondary btn-lg">
+                    <i class="fas fa-user-plus"></i> Register
+                </a>
+            </div>
+        </div>
+    {% endif %}
+</div>
+
+<div class="features-section">
+    <h2 class="section-title">Why Choose J.E.D.I.</h2>
+    <div class="feature-grid">
+        <div class="feature-card">
+            <div class="feature-icon">
+                <i class="fas fa-shield-alt"></i>
+            </div>
+            <h3>Enhanced Security</h3>
+            <p>State-of-the-art authentication system with two-factor authentication for maximum account protection</p>
+        </div>
+        <div class="feature-card">
+            <div class="feature-icon">
+                <i class="fas fa-bolt"></i>
+            </div>
+            <h3>Lightning Fast</h3>
+            <p>Optimized performance with a responsive interface that works seamlessly across all your devices</p>
+        </div>
+        <div class="feature-card">
+            <div class="feature-icon">
+                <i class="fas fa-chart-line"></i>
+            </div>
+            <h3>Advanced Analytics</h3>
+            <p>Gain insights with comprehensive monitoring and analytics tools that help you make informed decisions</p>
+        </div>
+        <div class="feature-card">
+            <div class="feature-icon">
+                <i class="fas fa-cog"></i>
+            </div>
+            <h3>Customizable</h3>
+            <p>Tailor the interface to your needs with powerful customization options and personalized settings</p>
         </div>
     </div>
-</body>
-</html>
+</div>
 
+<div class="testimonials-section">
+    <div class="section-title">What Our Users Say</div>
+    <div class="feature-grid">
+        <div class="feature-card">
+            <div class="feature-icon">
+                <i class="fas fa-quote-left"></i>
+            </div>
+            <p>"J.E.D.I. has completely transformed how I manage my digital workflow. The interface is intuitive, and the security features give me peace of mind."</p>
+            <h3>Sarah Johnson</h3>
+            <p>Product Manager</p>
+        </div>
+        <div class="feature-card">
+            <div class="feature-icon">
+                <i class="fas fa-quote-left"></i>
+            </div>
+            <p>"As a security professional, I'm impressed by the robust authentication systems. The dashboard is also incredibly useful for monitoring system status."</p>
+            <h3>Michael Chen</h3>
+            <p>Security Engineer</p>
+        </div>
+        <div class="feature-card">
+            <div class="feature-icon">
+                <i class="fas fa-quote-left"></i>
+            </div>
+            <p>"The customization options are fantastic. I've been able to configure J.E.D.I. exactly how I want it, and the performance is consistently excellent."</p>
+            <h3>Elena Rodriguez</h3>
+            <p>UX Designer</p>
+        </div>
+    </div>
+</div>
+{% endblock %}

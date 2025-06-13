@@ -1,6 +1,6 @@
-from flask import Blueprint, render_template, redirect, url_for
-from flask_login import current_user, login_required
+from flask import Blueprint, render_template
 from flask_caching import Cache
+import datetime
 
 main_bp = Blueprint(
     'main',
@@ -14,10 +14,8 @@ cache = Cache(config={'CACHE_TYPE': 'SimpleCache'})
 @main_bp.route('/')
 @cache.cached(timeout=60)
 def index():
-    # Redirect unauthenticated users to login
-    if not current_user.is_authenticated:
-        return redirect(url_for('auth.login'))
-    return render_template('main/index.html', title='Home')
+    # Show the index page to all users (authenticated and unauthenticated)
+    return render_template('main/index.html', title='Home', now=datetime.datetime.now())
 
 @main_bp.route('/health')
 def health_check():

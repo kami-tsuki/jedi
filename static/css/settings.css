@@ -1,0 +1,312 @@
+/* Settings Page Specific Styles */
+
+/* Settings Container Layout */
+.settings-container {
+    display: grid;
+    grid-template-columns: 250px 1fr;
+    gap: 2rem;
+    background: var(--light-color);
+    border-radius: var(--border-radius);
+    overflow: hidden;
+    box-shadow: var(--shadow-md);
+}
+
+.settings-nav {
+    background: linear-gradient(to bottom, rgba(110, 7, 243, 0.05), rgba(3, 104, 255, 0.05));
+    padding: 2rem 0;
+    border-right: 1px solid #edf2f7;
+}
+
+.settings-nav ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.settings-nav-item {
+    position: relative;
+    transition: var(--transition);
+}
+
+.settings-nav-item.active::before {
+    content: "";
+    position: absolute;
+    left: 0;
+    top: 0;
+    height: 100%;
+    width: 4px;
+    background: linear-gradient(45deg, var(--primary-color), var(--secondary-color));
+}
+
+.settings-nav-link {
+    display: flex;
+    align-items: center;
+    padding: 1rem 1.5rem;
+    color: var(--text-primary);
+    font-weight: 500;
+    transition: var(--transition);
+}
+
+.settings-nav-link:hover {
+    background-color: rgba(110, 7, 243, 0.08);
+    color: var(--primary-color);
+}
+
+.settings-nav-link.active {
+    background-color: rgba(110, 7, 243, 0.15);
+    color: var(--primary-color);
+    font-weight: 600;
+}
+
+.settings-nav-link i {
+    margin-right: 0.75rem;
+    font-size: 1.1rem;
+    width: 1.5rem;
+    text-align: center;
+}
+
+/* Settings Content */
+.settings-content {
+    padding: 2rem;
+}
+
+.settings-section {
+    display: none;
+}
+
+.settings-section.active {
+    display: block;
+    animation: fadeIn 0.3s ease;
+}
+
+.settings-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 2rem;
+    padding-bottom: 1rem;
+    border-bottom: 1px solid #edf2f7;
+}
+
+.settings-title {
+    margin: 0;
+    font-size: 1.5rem;
+    display: flex;
+    align-items: center;
+}
+
+.settings-title i {
+    margin-right: 0.75rem;
+    color: var(--primary-color);
+}
+
+.settings-form {
+    max-width: 600px;
+    margin-bottom: 2rem;
+}
+
+/* Dividers and Sections */
+.form-divider {
+    margin: 2rem 0;
+    height: 1px;
+    background: linear-gradient(to right, #edf2f7 0%, rgba(237, 242, 247, 0.5) 100%);
+}
+
+.totp-section {
+    background-color: #f8fafc;
+    padding: 1.5rem;
+    border-radius: var(--border-radius);
+    border: 1px solid #edf2f7;
+    margin-top: 2rem;
+}
+
+/* 2FA Status Indicators */
+.totp-status {
+    display: flex;
+    align-items: center;
+    margin-bottom: 1.5rem;
+}
+
+.totp-status-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-right: 1rem;
+}
+
+.totp-status-icon.enabled {
+    background-color: rgba(16, 185, 129, 0.1);
+    color: var(--success-color);
+}
+
+.totp-status-icon.disabled {
+    background-color: rgba(239, 68, 68, 0.1);
+    color: var(--danger-color);
+}
+
+.totp-status-text {
+    font-weight: 600;
+}
+
+.totp-status-text span {
+    display: block;
+    font-size: 0.875rem;
+    color: var(--text-secondary);
+    font-weight: 400;
+    margin-top: 0.25rem;
+}
+
+/* Button Groups */
+.action-buttons {
+    display: flex;
+    gap: 1rem;
+    margin-top: 1rem;
+}
+
+/* Form Components */
+.settings-form-2fa {
+    margin-top: 1.5rem;
+    padding-top: 1.5rem;
+    border-top: 1px solid #edf2f7;
+}
+
+.settings-form-group {
+    margin-bottom: 1.5rem;
+    max-width: 500px;
+}
+
+.errors {
+    color: var(--danger-color);
+    margin-top: 0.5rem;
+    font-size: 0.875rem;
+}
+
+/* Password Strength Meter */
+.password-strength-meter {
+    margin-top: 0.5rem;
+    margin-bottom: 1rem;
+}
+
+.strength-bars {
+    display: flex;
+    gap: 5px;
+    margin-bottom: 5px;
+}
+
+.strength-segment {
+    height: 4px;
+    flex: 1;
+    background-color: #e2e8f0;
+    border-radius: 2px;
+    transition: var(--transition);
+}
+
+.strength-segment.active {
+    background-color: var(--success-color);
+}
+
+.strength-text {
+    font-size: 0.75rem;
+    color: var(--text-secondary);
+}
+
+/* Tooltip Styles */
+.tooltip {
+    position: absolute;
+    background-color: var(--dark-color);
+    color: white;
+    padding: 0.5rem 0.75rem;
+    border-radius: var(--border-radius);
+    font-size: 0.75rem;
+    z-index: 1100;
+    opacity: 0;
+    transform: translateY(10px);
+    transition: opacity 0.3s, transform 0.3s;
+}
+
+.tooltip.visible {
+    opacity: 0.9;
+    transform: translateY(0);
+}
+
+.tooltip::after {
+    content: "";
+    position: absolute;
+    top: 100%;
+    left: 50%;
+    margin-left: -5px;
+    border-width: 5px;
+    border-style: solid;
+    border-color: var(--dark-color) transparent transparent transparent;
+}
+
+/* Form State Indicators */
+.btn-pulse {
+    animation: pulse 1.5s infinite;
+}
+
+.unsaved-indicator {
+    margin-left: 0.5rem;
+    color: var(--warning-color);
+}
+
+@keyframes pulse {
+    0% {
+        box-shadow: 0 0 0 0 rgba(110, 7, 243, 0.4);
+    }
+    70% {
+        box-shadow: 0 0 0 5px rgba(110, 7, 243, 0);
+    }
+    100% {
+        box-shadow: 0 0 0 0 rgba(110, 7, 243, 0);
+    }
+}
+
+/* Responsive Adjustments */
+@media (max-width: 768px) {
+    .settings-container {
+        grid-template-columns: 1fr;
+    }
+
+    .settings-nav {
+        border-right: none;
+        border-bottom: 1px solid #edf2f7;
+        padding: 0;
+    }
+
+    .settings-nav ul {
+        display: flex;
+        overflow-x: auto;
+        white-space: nowrap;
+        -webkit-overflow-scrolling: touch;
+        padding: 0.5rem;
+    }
+
+    .settings-nav-item {
+        flex-shrink: 0;
+    }
+
+    .settings-nav-item.active::before {
+        width: 100%;
+        height: 3px;
+        top: auto;
+        bottom: 0;
+    }
+
+    .settings-nav-link {
+        padding: 0.75rem 1rem;
+    }
+
+    .action-buttons {
+        flex-direction: column;
+    }
+}
+
+/* Animations */
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}

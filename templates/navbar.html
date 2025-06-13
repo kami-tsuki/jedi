@@ -1,0 +1,68 @@
+<nav class="navbar" x-data="{ mobileMenuOpen: false }">
+    <div class="navbar-container">
+        <div class="navbar-logo">
+            <a href="{{ url_for('main.index') }}" class="logo-link">
+                <i class="fas fa-jedi"></i>
+                <span class="logo-text">J.E.D.I.</span>
+            </a>
+            <button class="mobile-menu-toggle" @click="mobileMenuOpen = !mobileMenuOpen" aria-label="Toggle navigation">
+                <i class="fas" :class="mobileMenuOpen ? 'fa-times' : 'fa-bars'"></i>
+            </button>
+        </div>
+
+        <div class="navbar-menu" :class="{ 'active': mobileMenuOpen }">
+            <ul class="nav-links">
+                <li class="nav-item">
+                    <a href="{{ url_for('main.index') }}" class="nav-link" @click="mobileMenuOpen = false">
+                        <i class="fas fa-home"></i> Home
+                    </a>
+                </li>
+                {% if current_user.is_authenticated %}
+                    <li class="nav-item">
+                        <a href="{{ url_for('dashboard.dashboard') }}" class="nav-link" @click="mobileMenuOpen = false">
+                            <i class="fas fa-tachometer-alt"></i> Dashboard
+                        </a>
+                    </li>
+                    <li class="nav-item dropdown" x-data="{ open: false }">
+                        <a @click.prevent="open = !open" @click.away="open = false" class="nav-link dropdown-toggle">
+                            <i class="fas fa-user-circle"></i>
+                            <span>{{ current_user.username }}</span>
+                            <i class="fas fa-chevron-down" :class="{'fa-rotate-180': open}"></i>
+                        </a>
+                        <ul class="dropdown-menu"
+                            x-show="open"
+                            x-transition:enter="transition ease-out duration-200"
+                            x-transition:enter-start="opacity-0 transform scale-95"
+                            x-transition:enter-end="opacity-100 transform scale-100"
+                            x-transition:leave="transition ease-in duration-150"
+                            x-transition:leave-start="opacity-100 transform scale-100"
+                            x-transition:leave-end="opacity-0 transform scale-95">
+                            <li>
+                                <a href="{{ url_for('dashboard.settings') }}" class="dropdown-item" @click="mobileMenuOpen = false">
+                                    <i class="fas fa-cog"></i> Settings
+                                </a>
+                            </li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li>
+                                <a href="{{ url_for('auth.logout') }}" class="dropdown-item" @click="mobileMenuOpen = false">
+                                    <i class="fas fa-sign-out-alt"></i> Logout
+                                </a>
+                            </li>
+                        </ul>
+                    </li>
+                {% else %}
+                    <li class="nav-item">
+                        <a href="{{ url_for('auth.login') }}" class="nav-link" @click="mobileMenuOpen = false">
+                            <i class="fas fa-sign-in-alt"></i> Login
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="{{ url_for('auth.register') }}" class="nav-link highlight" @click="mobileMenuOpen = false">
+                            <i class="fas fa-user-plus"></i> Register
+                        </a>
+                    </li>
+                {% endif %}
+            </ul>
+        </div>
+    </div>
+</nav>

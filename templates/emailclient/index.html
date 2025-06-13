@@ -1,0 +1,70 @@
+{% extends 'base.html' %}
+
+{% block title %}Email Client - J.E.D.I.{% endblock %}
+
+{% block extra_head %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/email.css') }}">
+{% endblock %}
+
+{% block content %}
+<div class="email-client-container" id="emailApp">
+    <div class="email-sidebar">
+        <div class="email-actions">
+            <a href="{{ url_for('email.compose') }}" class="btn btn-primary compose-btn">
+                <i class="fas fa-pen"></i> Compose
+            </a>
+
+            <a href="{{ url_for('email.setup') }}" class="btn btn-outline settings-btn">
+                <i class="fas fa-cog"></i> Settings
+            </a>
+        </div>
+
+        <div class="folder-list" id="folderList">
+            <div class="folder-heading">
+                <h3>Folders</h3>
+                <span class="refresh-icon" id="refreshFolders">
+                    <i class="fas fa-sync-alt"></i>
+                </span>
+            </div>
+            <ul class="folders">
+                <li class="folder-item loading">
+                    <i class="fas fa-circle-notch fa-spin"></i> Loading folders...
+                </li>
+            </ul>
+        </div>
+    </div>
+
+    <div class="email-main">
+        <div class="email-welcome">
+            <div class="welcome-icon">
+                <i class="fas fa-envelope"></i>
+            </div>
+            <h2>Welcome to J.E.D.I. Email Client</h2>
+            <p>Access your emails directly from our secure platform.</p>
+            <div class="welcome-actions">
+                <a href="{{ url_for('email.inbox') }}" class="btn btn-primary">
+                    <i class="fas fa-inbox"></i> Go to Inbox
+                </a>
+                <a href="{{ url_for('email.compose') }}" class="btn btn-outline">
+                    <i class="fas fa-pen"></i> Compose New Email
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/email.js') }}"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Load folders when the page loads
+        loadFolders();
+
+        // Set up refresh button
+        document.getElementById('refreshFolders').addEventListener('click', function() {
+            loadFolders();
+        });
+    });
+</script>
+{% endblock %}

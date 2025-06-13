@@ -1,206 +1,392 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{{ title }}</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
-</head>
-<body>
-    <div class="container">
-        <header class="nav-header">
-            <h1>Flask Jedi App</h1>
-            <nav>
-                <ul>
-                    <li><a href="{{ url_for('main.index') }}">Home</a></li>
-                    <li><a href="{{ url_for('dashboard.dashboard') }}">Dashboard</a></li>
-                    <li><a href="{{ url_for('dashboard.settings') }}" class="active">Settings</a></li>
-                    {% if current_user.is_admin %}
-                        <li><a href="{{ url_for('admin.admin') }}">Admin</a></li>
-                    {% endif %}
-                    <li><a href="{{ url_for('auth.logout') }}">Logout</a></li>
-                </ul>
-            </nav>
-        </header>
+{% extends "base.html" %}
 
-        {% with messages = get_flashed_messages(with_categories=true) %}
-            {% if messages %}
-                {% for category, message in messages %}
-                    <div class="flash-message {{ category }}">
-                        {{ message }}
-                    </div>
-                {% endfor %}
-            {% endif %}
-        {% endwith %}
+{% block title %}J.E.D.I. | Account Settings{% endblock %}
 
-        <div class="content">
-            <h2>User Settings</h2>
+{% block extra_head %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/dashboard.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/settings.css') }}">
+{% endblock %}
 
-            <div class="settings-container">
-                <div class="settings-nav">
-                    <ul>
-                        <li><a href="#profile" class="settings-tab active" data-target="profile-section">Profile</a></li>
-                        <li><a href="#security" class="settings-tab" data-target="security-section">Security</a></li>
-                    </ul>
+{% block content %}
+<div class="dashboard-page">
+    <div class="dashboard-header">
+        <h1 class="welcome-message">Account Settings</h1>
+        <div class="dashboard-actions">
+            <a href="{{ url_for('dashboard.dashboard') }}" class="btn btn-secondary">
+                <i class="fas fa-arrow-left"></i> Back to Dashboard
+            </a>
+        </div>
+    </div>
+
+    <div class="settings-container" x-data="{ activeTab: 'profile' }">
+        <!-- Settings Navigation -->
+        <div class="settings-nav">
+            <ul>
+                <li class="settings-nav-item" :class="{ 'active': activeTab === 'profile' }">
+                    <a href="#profile" class="settings-nav-link" :class="{ 'active': activeTab === 'profile' }" @click.prevent="activeTab = 'profile'" data-tab="profile">
+                        <i class="fas fa-user"></i> Profile
+                    </a>
+                </li>
+                <li class="settings-nav-item" :class="{ 'active': activeTab === 'security' }">
+                    <a href="#security" class="settings-nav-link" :class="{ 'active': activeTab === 'security' }" @click.prevent="activeTab = 'security'" data-tab="security">
+                        <i class="fas fa-shield-alt"></i> Security
+                    </a>
+                </li>
+                <li class="settings-nav-item" :class="{ 'active': activeTab === 'notifications' }">
+                    <a href="#notifications" class="settings-nav-link" :class="{ 'active': activeTab === 'notifications' }" @click.prevent="activeTab = 'notifications'" data-tab="notifications">
+                        <i class="fas fa-bell"></i> Notifications
+                    </a>
+                </li>
+                <li class="settings-nav-item" :class="{ 'active': activeTab === 'preferences' }">
+                    <a href="#preferences" class="settings-nav-link" :class="{ 'active': activeTab === 'preferences' }" @click.prevent="activeTab = 'preferences'" data-tab="preferences">
+                        <i class="fas fa-sliders-h"></i> Preferences
+                    </a>
+                </li>
+                <li class="settings-nav-item" :class="{ 'active': activeTab === 'data' }">
+                    <a href="#data" class="settings-nav-link" :class="{ 'active': activeTab === 'data' }" @click.prevent="activeTab = 'data'" data-tab="data">
+                        <i class="fas fa-database"></i> Data & Privacy
+                    </a>
+                </li>
+            </ul>
+        </div>
+
+        <!-- Settings Content -->
+        <div class="settings-content">
+            <!-- Profile Section -->
+            <div id="profile" class="settings-section" :class="{ 'active': activeTab === 'profile' }">
+                <div class="settings-header">
+                    <h2 class="settings-title"><i class="fas fa-user-circle"></i> Profile Settings</h2>
                 </div>
 
-                <div class="settings-content">
-                    <div id="profile-section" class="settings-section active">
-                        <h3>Profile Settings</h3>
-
-                        <form method="POST" action="{{ url_for('dashboard.update_username') }}" class="settings-form">
-                            {{ username_form.hidden_tag() }}
-                            <div class="form-group">
-                                <label for="username">Username</label>
-                                {{ username_form.username(class="form-control", value=current_user.username) }}
-                                {% if username_form.username.errors %}
-                                    <div class="errors">
-                                        {% for error in username_form.username.errors %}
-                                            <span>{{ error }}</span>
-                                        {% endfor %}
-                                    </div>
-                                {% endif %}
-                            </div>
-                            <div class="form-group">
-                                {{ username_form.current_password.label }}
-                                {{ username_form.current_password(class="form-control") }}
-                                {% if username_form.current_password.errors %}
-                                    <div class="errors">
-                                        {% for error in username_form.current_password.errors %}
-                                            <span>{{ error }}</span>
-                                        {% endfor %}
-                                    </div>
-                                {% endif %}
-                            </div>
-                            <button type="submit" class="btn">Update Username</button>
-                        </form>
-
-                        <form method="POST" action="{{ url_for('dashboard.update_email') }}" class="settings-form">
-                            {{ email_form.hidden_tag() }}
-                            <div class="form-group">
-                                <label for="email">Email</label>
-                                {{ email_form.email(class="form-control", value=current_user.email) }}
-                                {% if email_form.email.errors %}
-                                    <div class="errors">
-                                        {% for error in email_form.email.errors %}
-                                            <span>{{ error }}</span>
-                                        {% endfor %}
-                                    </div>
-                                {% endif %}
-                            </div>
-                            <div class="form-group">
-                                {{ email_form.current_password.label }}
-                                {{ email_form.current_password(class="form-control") }}
-                                {% if email_form.current_password.errors %}
-                                    <div class="errors">
-                                        {% for error in email_form.current_password.errors %}
-                                            <span>{{ error }}</span>
-                                        {% endfor %}
-                                    </div>
-                                {% endif %}
-                            </div>
-                            <button type="submit" class="btn">Update Email</button>
-                        </form>
+                <!-- Username Form -->
+                <form method="POST" action="{{ url_for('dashboard.update_username') }}" class="settings-form">
+                    {{ username_form.hidden_tag() }}
+                    <div class="card-header">
+                        <h4>Update Username</h4>
                     </div>
 
-                    <div id="security-section" class="settings-section">
-                        <h3>Security Settings</h3>
+                    <div class="form-group">
+                        <label for="username">Username</label>
+                        {{ username_form.username(class="form-control", value=current_user.username) }}
+                        {% if username_form.username.errors %}
+                            <div class="errors">
+                                {% for error in username_form.username.errors %}
+                                    <span>{{ error }}</span>
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                    </div>
+                    <div class="form-group">
+                        {{ username_form.current_password.label }}
+                        {{ username_form.current_password(class="form-control", placeholder="Enter your current password to confirm") }}
+                        {% if username_form.current_password.errors %}
+                            <div class="errors">
+                                {% for error in username_form.current_password.errors %}
+                                    <span>{{ error }}</span>
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                    </div>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-save"></i> Update Username
+                    </button>
+                </form>
 
-                        <form method="POST" action="{{ url_for('dashboard.update_password') }}" class="settings-form">
-                            {{ password_form.hidden_tag() }}
-                            <div class="form-group">
-                                {{ password_form.current_password.label }}
-                                {{ password_form.current_password(class="form-control") }}
-                                {% if password_form.current_password.errors %}
+                <div class="form-divider"></div>
+
+                <!-- Email Form -->
+                <form method="POST" action="{{ url_for('dashboard.update_email') }}" class="settings-form">
+                    {{ email_form.hidden_tag() }}
+                    <div class="card-header">
+                        <h4>Update Email Address</h4>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="email">Email</label>
+                        {{ email_form.email(class="form-control", value=current_user.email) }}
+                        {% if email_form.email.errors %}
+                            <div class="errors">
+                                {% for error in email_form.email.errors %}
+                                    <span>{{ error }}</span>
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                    </div>
+                    <div class="form-group">
+                        {{ email_form.current_password.label }}
+                        {{ email_form.current_password(class="form-control", placeholder="Enter your current password to confirm") }}
+                        {% if email_form.current_password.errors %}
+                            <div class="errors">
+                                {% for error in email_form.current_password.errors %}
+                                    <span>{{ error }}</span>
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                    </div>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-save"></i> Update Email
+                    </button>
+                </form>
+            </div>
+
+            <!-- Security Section -->
+            <div id="security" class="settings-section" :class="{ 'active': activeTab === 'security' }">
+                <div class="settings-header">
+                    <h2 class="settings-title"><i class="fas fa-shield-alt"></i> Security Settings</h2>
+                </div>
+
+                <!-- Password Form -->
+                <form method="POST" action="{{ url_for('dashboard.update_password') }}" class="settings-form">
+                    {{ password_form.hidden_tag() }}
+                    <div class="card-header">
+                        <h4>Change Password</h4>
+                    </div>
+
+                    <div class="form-group">
+                        {{ password_form.current_password.label }}
+                        {{ password_form.current_password(class="form-control", placeholder="Enter your current password") }}
+                        {% if password_form.current_password.errors %}
+                            <div class="errors">
+                                {% for error in password_form.current_password.errors %}
+                                    <span>{{ error }}</span>
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                    </div>
+                    <div class="form-group">
+                        {{ password_form.new_password.label }}
+                        {{ password_form.new_password(class="form-control", placeholder="Choose a strong password") }}
+                        {% if password_form.new_password.errors %}
+                            <div class="errors">
+                                {% for error in password_form.new_password.errors %}
+                                    <span>{{ error }}</span>
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                    </div>
+                    <div class="form-group">
+                        {{ password_form.confirm_password.label }}
+                        {{ password_form.confirm_password(class="form-control", placeholder="Re-enter your new password") }}
+                        {% if password_form.confirm_password.errors %}
+                            <div class="errors">
+                                {% for error in password_form.confirm_password.errors %}
+                                    <span>{{ error }}</span>
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                    </div>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-key"></i> Update Password
+                    </button>
+                </form>
+
+                <!-- 2FA Section -->
+                <div class="totp-section">
+                    <div class="card-header">
+                        <h4>Two-Factor Authentication (2FA)</h4>
+                    </div>
+
+                    <div class="totp-status">
+                        {% if current_user.totp_enabled %}
+                            <div class="totp-status-icon enabled">
+                                <i class="fas fa-shield-check"></i>
+                            </div>
+                            <div class="totp-status-text">
+                                2FA is currently enabled
+                                <span>Your account has an extra layer of security</span>
+                            </div>
+                        {% else %}
+                            <div class="totp-status-icon disabled">
+                                <i class="fas fa-shield-exclamation"></i>
+                            </div>
+                            <div class="totp-status-text">
+                                2FA is currently disabled
+                                <span>We recommend enabling two-factor authentication for increased security</span>
+                            </div>
+                        {% endif %}
+                    </div>
+
+                    {% if current_user.totp_enabled %}
+                        <form method="POST" action="{{ url_for('dashboard.disable_totp') }}" class="settings-form-2fa">
+                            {{ disable_totp_form.hidden_tag() }}
+                            <div class="settings-form-group">
+                                {{ disable_totp_form.password.label }}
+                                {{ disable_totp_form.password(class="form-control", placeholder="Enter your password to disable 2FA") }}
+                                {% if disable_totp_form.password.errors %}
                                     <div class="errors">
-                                        {% for error in password_form.current_password.errors %}
+                                        {% for error in disable_totp_form.password.errors %}
                                             <span>{{ error }}</span>
                                         {% endfor %}
                                     </div>
                                 {% endif %}
                             </div>
-                            <div class="form-group">
-                                {{ password_form.new_password.label }}
-                                {{ password_form.new_password(class="form-control") }}
-                                {% if password_form.new_password.errors %}
-                                    <div class="errors">
-                                        {% for error in password_form.new_password.errors %}
-                                            <span>{{ error }}</span>
-                                        {% endfor %}
-                                    </div>
-                                {% endif %}
-                            </div>
-                            <div class="form-group">
-                                {{ password_form.confirm_password.label }}
-                                {{ password_form.confirm_password(class="form-control") }}
-                                {% if password_form.confirm_password.errors %}
-                                    <div class="errors">
-                                        {% for error in password_form.confirm_password.errors %}
-                                            <span>{{ error }}</span>
-                                        {% endfor %}
-                                    </div>
-                                {% endif %}
-                            </div>
-                            <button type="submit" class="btn">Update Password</button>
+                            <button type="submit" class="btn btn-danger">
+                                <i class="fas fa-shield-alt"></i> Disable 2FA
+                            </button>
                         </form>
-
-                        <div class="totp-section">
-                            <h4>Two-Factor Authentication (2FA)</h4>
-                            {% if current_user.totp_enabled %}
-                                <p>Two-factor authentication is <strong>enabled</strong> for your account.</p>
-                                <form method="POST" action="{{ url_for('dashboard.disable_totp') }}" class="settings-form">
-                                    {{ disable_totp_form.hidden_tag() }}
-                                    <div class="form-group">
-                                        {{ disable_totp_form.password.label }}
-                                        {{ disable_totp_form.password(class="form-control") }}
-                                        {% if disable_totp_form.password.errors %}
-                                            <div class="errors">
-                                                {% for error in disable_totp_form.password.errors %}
-                                                    <span>{{ error }}</span>
-                                                {% endfor %}
-                                            </div>
-                                        {% endif %}
-                                    </div>
-                                    <button type="submit" class="btn btn-danger">Disable 2FA</button>
-                                </form>
-                            {% else %}
-                                <p>Two-factor authentication is <strong>disabled</strong> for your account.</p>
-                                <a href="{{ url_for('dashboard.setup_totp') }}" class="btn">Enable 2FA</a>
-                            {% endif %}
+                    {% else %}
+                        <div class="action-buttons">
+                            <a href="{{ url_for('dashboard.setup_totp') }}" class="btn btn-primary">
+                                <i class="fas fa-shield-alt"></i> Enable 2FA
+                            </a>
+                            <a href="#" class="btn btn-secondary" data-tooltip="Learn how to secure your account with two-factor authentication">
+                                <i class="fas fa-question-circle"></i> Learn More
+                            </a>
                         </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Notifications Section -->
+            <div id="notifications" class="settings-section" :class="{ 'active': activeTab === 'notifications' }">
+                <div class="settings-header">
+                    <h2 class="settings-title"><i class="fas fa-bell"></i> Notification Preferences</h2>
+                </div>
+
+                <div class="dashboard-card">
+                    <div class="card-header">
+                        <h4>Notification Settings</h4>
+                    </div>
+                    <div class="card-content">
+                        <p>Customize how and when you receive notifications from our application.</p>
+
+                        <form class="settings-form">
+                            <!-- Email Notifications -->
+                            <div class="form-group">
+                                <label for="notification-security" class="checkbox">
+                                    <input type="checkbox" id="notification-security" checked>
+                                    <span>Security alerts</span>
+                                </label>
+                                <p class="form-text">Get notified about important security events</p>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="notification-updates" class="checkbox">
+                                    <input type="checkbox" id="notification-updates" checked>
+                                    <span>Product updates</span>
+                                </label>
+                                <p class="form-text">Stay informed about new features and improvements</p>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="notification-marketing" class="checkbox">
+                                    <input type="checkbox" id="notification-marketing">
+                                    <span>Marketing communications</span>
+                                </label>
+                                <p class="form-text">Receive information about special offers and promotions</p>
+                            </div>
+
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-save"></i> Save Preferences
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Preferences Section -->
+            <div id="preferences" class="settings-section" :class="{ 'active': activeTab === 'preferences' }">
+                <div class="settings-header">
+                    <h2 class="settings-title"><i class="fas fa-sliders-h"></i> Interface Preferences</h2>
+                </div>
+
+                <div class="dashboard-card">
+                    <div class="card-header">
+                        <h4>Interface Settings</h4>
+                    </div>
+                    <div class="card-content">
+                        <p>Customize the look and feel of the application.</p>
+
+                        <form class="settings-form">
+                            <div class="form-group">
+                                <label for="theme-preference">Theme</label>
+                                <select id="theme-preference" class="form-control">
+                                    <option value="light">Light</option>
+                                    <option value="dark">Dark</option>
+                                    <option value="system">Use System Preference</option>
+                                </select>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="density-preference">Interface Density</label>
+                                <select id="density-preference" class="form-control">
+                                    <option value="comfortable">Comfortable</option>
+                                    <option value="compact">Compact</option>
+                                </select>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="language-preference">Language</label>
+                                <select id="language-preference" class="form-control">
+                                    <option value="en">English</option>
+                                    <option value="es">Español</option>
+                                    <option value="fr">Français</option>
+                                    <option value="de">Deutsch</option>
+                                </select>
+                            </div>
+
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-save"></i> Save Preferences
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Data & Privacy Section -->
+            <div id="data" class="settings-section" :class="{ 'active': activeTab === 'data' }">
+                <div class="settings-header">
+                    <h2 class="settings-title"><i class="fas fa-database"></i> Data & Privacy</h2>
+                </div>
+
+                <div class="dashboard-card">
+                    <div class="card-header">
+                        <h4>Your Data</h4>
+                    </div>
+                    <div class="card-content">
+                        <p>Manage your account data and privacy settings.</p>
+
+                        <div class="action-buttons">
+                            <button class="btn btn-secondary">
+                                <i class="fas fa-download"></i> Download Your Data
+                            </button>
+                            <button class="btn btn-danger">
+                                <i class="fas fa-trash-alt"></i> Delete Account
+                            </button>
+                        </div>
+
+                        <div class="form-divider"></div>
+
+                        <h5>Privacy Settings</h5>
+                        <form class="settings-form">
+                            <div class="form-group">
+                                <label for="data-analytics" class="checkbox">
+                                    <input type="checkbox" id="data-analytics" checked>
+                                    <span>Allow analytics</span>
+                                </label>
+                                <p class="form-text">Help us improve by allowing analytics data collection</p>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="data-cookies" class="checkbox">
+                                    <input type="checkbox" id="data-cookies" checked>
+                                    <span>Accept cookies</span>
+                                </label>
+                                <p class="form-text">Allow cookies for a better browsing experience</p>
+                            </div>
+
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-save"></i> Save Privacy Settings
+                            </button>
+                        </form>
                     </div>
                 </div>
             </div>
         </div>
-
-        <footer>
-            <p>&copy; 2025 Jedi Flask App</p>
-        </footer>
     </div>
+</div>
+{% endblock %}
 
-    <script>
-        // Simple tab switching logic
-        document.addEventListener('DOMContentLoaded', function() {
-            const tabs = document.querySelectorAll('.settings-tab');
-            tabs.forEach(tab => {
-                tab.addEventListener('click', function(e) {
-                    e.preventDefault();
-
-                    // Remove active class from all tabs and sections
-                    tabs.forEach(t => t.classList.remove('active'));
-                    document.querySelectorAll('.settings-section').forEach(section => {
-                        section.classList.remove('active');
-                    });
-
-                    // Add active class to clicked tab
-                    this.classList.add('active');
-
-                    // Show target section
-                    const targetId = this.getAttribute('data-target');
-                    document.getElementById(targetId).classList.add('active');
-                });
-            });
-        });
-    </script>
-</body>
-</html>
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/settings.js') }}"></script>
+{% endblock %}
