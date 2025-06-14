@@ -9,6 +9,7 @@ Flask-Login~=0.6.3
 pyotp~=2.9.0
 SQLAlchemy~=2.0.41
 WTForms~=3.2.1
+Flask-WTF~=1.2.1
 qrcode~=8.2
 django-qrcode~=0.3
 PyQRCode~=1.2.1

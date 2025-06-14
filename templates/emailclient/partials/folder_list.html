@@ -1,0 +1,24 @@
+{% for folder in folders %}
+<li class="folder-item {% if folder.path == active_folder %}active{% endif %} {% if level > 0 %}indent-{{ level }}{% endif %} {% if folder.has_children %}collapsible{% endif %}"
+    data-folder="{{ folder.path }}">
+    <div class="folder-header">
+        {% if folder.has_children %}
+        <span class="folder-toggle {% if folder.path == active_folder or is_ancestor(folder, active_folder) %}expanded{% endif %}">
+            <i class="fas {% if folder.path == active_folder or is_ancestor(folder, active_folder) %}fa-chevron-down{% else %}fa-chevron-right{% endif %}"></i>
+        </span>
+        {% else %}
+        <span class="folder-toggle-placeholder"></span>
+        {% endif %}
+        <span class="folder-icon"><i class="fas {{ folder_icon(folder.type) }}"></i></span>
+        <span class="folder-name">{{ folder.display_name }}</span>
+    </div>
+
+    {% if folder.has_children %}
+    <ul class="subfolder-list {% if folder.path == active_folder or is_ancestor(folder, active_folder) %}visible{% else %}hidden{% endif %}">
+        {% with folders=folder.children, level=level+1 %}
+            {% include 'emailclient/partials/folder_list.html' %}
+        {% endwith %}
+    </ul>
+    {% endif %}
+</li>
+{% endfor %}

@@ -23,6 +23,14 @@
                             <i class="fas fa-tachometer-alt"></i> Dashboard
                         </a>
                     </li>
+                    <li class="nav-item">
+                        <a href="{{ url_for('email.inbox') }}" class="nav-link" @click="mobileMenuOpen = false">
+                            <i class="fas fa-envelope"></i> Email
+                            {% if current_user.email_settings %}
+                                <span class="nav-badge" id="unread-email-count"></span>
+                            {% endif %}
+                        </a>
+                    </li>
                     <li class="nav-item dropdown" x-data="{ open: false }">
                         <a @click.prevent="open = !open" @click.away="open = false" class="nav-link dropdown-toggle">
                             <i class="fas fa-user-circle"></i>
@@ -42,6 +50,19 @@
                                     <i class="fas fa-cog"></i> Settings
                                 </a>
                             </li>
+                            {% if current_user.email_settings %}
+                                <li>
+                                    <a href="{{ url_for('email.setup') }}" class="dropdown-item" @click="mobileMenuOpen = false">
+                                        <i class="fas fa-envelope-open-text"></i> Email Settings
+                                    </a>
+                                </li>
+                            {% else %}
+                                <li>
+                                    <a href="{{ url_for('email.setup') }}" class="dropdown-item" @click="mobileMenuOpen = false">
+                                        <i class="fas fa-envelope-open-text"></i> Setup Email
+                                    </a>
+                                </li>
+                            {% endif %}
                             <li><hr class="dropdown-divider"></li>
                             <li>
                                 <a href="{{ url_for('auth.logout') }}" class="dropdown-item" @click="mobileMenuOpen = false">

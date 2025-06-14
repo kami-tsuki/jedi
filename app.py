@@ -1,14 +1,17 @@
 import os
 from datetime import timedelta, datetime
-from flask import Flask, render_template, request, redirect, url_for, g
+from flask import Flask, render_template, request, redirect, url_for, g, jsonify
 from flask_compress import Compress
 from flask_caching import Cache
 from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
 from werkzeug.middleware.proxy_fix import ProxyFix
 from dotenv import load_dotenv
-from flask_login import current_user
+from flask_login import current_user, LoginManager
+from flask_migrate import Migrate
+from flask_wtf.csrf import CSRFProtect
 import logging
+from logging.handlers import RotatingFileHandler
 
 from database import db
 from database.identity.models import User
@@ -27,6 +30,11 @@ PUBLIC_ENDPOINTS = [
     'main.health_check',
     'static'
 ]
+
+# Initialize extensions
+login_manager = LoginManager()
+migrate = Migrate()
+csrf = CSRFProtect()
 
 def create_app(config=None):
     """
@@ -79,10 +87,10 @@ def create_app(config=None):
 
     # Initialize extensions
     db.init_app(app)
+    migrate.init_app(app, db)
 
     # Initialize login manager
-    from flask_login import LoginManager
-    login_manager = LoginManager(app)
+    login_manager.init_app(app)
     login_manager.login_view = 'auth.login'
     login_manager.login_message = 'Please log in to access this page.'
     login_manager.login_message_category = 'info'
@@ -131,6 +139,12 @@ def create_app(config=None):
     auth_limiter.init_app(app)  # Initialize limiter in auth blueprint
     email_limiter.init_app(app)  # Initialize limiter in email client blueprint
 
+    # Initialize CSRF protection
+    csrf.init_app(app)
+
+    # Setup logging
+    setup_logging(app)
+
     # Register blueprints
     app.register_blueprint(main_bp)
     app.register_blueprint(auth_bp)
@@ -139,51 +153,77 @@ def create_app(config=None):
     app.register_blueprint(monitoring_bp)
     app.register_blueprint(email_bp)
 
-    # Error handlers
-    @app.errorhandler(404)
-    def not_found_error(error):
-        return render_template('errors/404.html'), 404
-
-    @app.errorhandler(500)
-    def internal_error(error):
-        db.session.rollback()  # Rollback db session in case of error
-        return render_template('errors/500.html'), 500
-
-    # Database initialization
+    # Create database tables
     with app.app_context():
-        initialize_database(app)
+        db.create_all()
+        create_admin_user(db)
+
+    # Register error handlers
+    register_error_handlers(app)
+
+    @app.context_processor
+    def inject_now():
+        return {'now': datetime.utcnow()}
+
+    # Provide CSRF token for all templates
+    @app.context_processor
+    def inject_csrf_token():
+        from flask_wtf.csrf import generate_csrf
+        return dict(csrf_token=generate_csrf)
+
+    @app.after_request
+    def set_csrf_cookie(response):
+        from flask_wtf.csrf import generate_csrf
+        if request.path.startswith('/static/'):
+            return response
+        response.set_cookie('csrf_token', generate_csrf(), samesite='Strict')
+        return response
 
     return app
 
-def initialize_database(app):
-    """Create database tables and initial admin user"""
-    db.create_all()
+def setup_logging(app):
+    if not os.path.exists('logs'):
+        os.mkdir('logs')
 
-    # Check if admin user exists, if not create it
-    admin_username = os.getenv('ADMIN_USERNAME')
-    admin_email = os.getenv('ADMIN_EMAIL')
-    admin_password = os.getenv('ADMIN_PASSWORD')
+    file_handler = RotatingFileHandler('logs/app.log', maxBytes=10240, backupCount=10)
+    file_handler.setFormatter(logging.Formatter(
+        '%(asctime)s - %(name)s - %(levelname)s - %(message)s'))
+    file_handler.setLevel(logging.INFO)
 
-    if not all([admin_username, admin_email, admin_password]):
-        app.logger.warning("Admin credentials not fully defined in .env file")
-        return
+    app.logger.addHandler(file_handler)
+    app.logger.setLevel(logging.INFO)
+    app.logger.info('Application startup')
 
-    existing_admin = User.query.filter(
-        (User.username == admin_username) | (User.email == admin_email)
-    ).first()
-
-    if not existing_admin:
-        admin = User(
-            username=admin_username,
-            email=admin_email,
-            is_admin=True
-        )
-        admin.set_password(admin_password)
+def create_admin_user(db):
+    admin = User.query.filter_by(username='admin').first()
+    if not admin:
+        admin = User(username='admin', email='admin@example.com', is_admin=True)
+        admin.set_password('adminpassword')
         db.session.add(admin)
         db.session.commit()
-        app.logger.info(f"Created initial admin user: {admin_username}")
+        print('Admin user created')
     else:
-        app.logger.info(f"Admin user already exists: {existing_admin.username}")
+        print('Admin user already exists: admin')
+
+def register_error_handlers(app):
+    @app.errorhandler(404)
+    def page_not_found(e):
+        return render_template('errors/404.html'), 404
+
+    @app.errorhandler(500)
+    def internal_server_error(e):
+        app.logger.error(f"Internal server error: {str(e)}")
+        return render_template('errors/500.html'), 500
+
+    @app.errorhandler(CSRFError)
+    def handle_csrf_error(e):
+        app.logger.warning(f"CSRF error: {str(e)}")
+        if request.is_xhr:
+            return jsonify({"error": "CSRF token is invalid or expired"}), 400
+        return render_template('errors/400.html', error=str(e)), 400
+
+# Import CSRF Error after function definition to avoid circular import
+from flask_wtf.csrf import CSRFError
 
 # Create the application instance
 app = create_app()

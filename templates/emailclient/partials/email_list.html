@@ -1,0 +1,85 @@
+{% if emails %}
+    {% for email in emails %}
+    <div class="email-item {% if not email.read %}unread{% endif %}" data-email-id="{{ email.id }}" data-folder="{{ folder }}">
+        <!-- Item selection -->
+        <div class="email-checkbox">
+            <input type="checkbox" id="chk-{{ email.id }}" class="item-select" aria-label="Select email">
+            <label for="chk-{{ email.id }}" class="checkbox-custom"></label>
+        </div>
+
+        <!-- Sender avatar -->
+        <div class="sender-avatar" aria-hidden="true">
+            {% set sender_name = email.from.split('<')[0]|trim %}
+            {% if sender_name %}
+                {{ sender_name[0]|upper }}
+            {% else %}
+                ?
+            {% endif %}
+        </div>
+
+        <!-- Email content preview -->
+        <div class="email-content-preview">
+            <!-- Sender and date -->
+            <div class="email-meta">
+                <div class="email-sender">{{ email.from.split('<')[0]|trim }}</div>
+                <time class="email-date" datetime="{{ email.date }}">{{ email.date }}</time>
+
+                <!-- Priority indicators -->
+                <div class="email-indicators">
+                    {% if email.has_attachments %}
+                    <span class="indicator attachment-indicator" title="Has attachment">
+                        <i class="fas fa-paperclip"></i><span class="sr-only">Has attachment</span>
+                    </span>
+                    {% endif %}
+
+                    {% if not email.read %}
+                    <span class="indicator unread-indicator" title="Unread">
+                        <i class="fas fa-circle"></i><span class="sr-only">Unread</span>
+                    </span>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Subject line -->
+            <h3 class="email-subject">{{ email.subject }}</h3>
+
+            <!-- Email body preview -->
+            <div class="email-preview">
+                {{ email.body|striptags|truncate(120) }}
+            </div>
+        </div>
+
+        <!-- Quick actions (visible on hover/tap) -->
+        <div class="email-quick-actions">
+            <button type="button" class="quick-action archive-action" title="Archive">
+                <i class="fas fa-archive"></i>
+            </button>
+            <button type="button" class="quick-action delete-action" title="Delete">
+                <i class="fas fa-trash-alt"></i>
+            </button>
+            <button type="button" class="quick-action mark-read-action" title="{{ 'Mark as read' if not email.read else 'Mark as unread' }}">
+                <i class="fas {{ 'fa-envelope-open' if not email.read else 'fa-envelope' }}"></i>
+            </button>
+        </div>
+    </div>
+    {% endfor %}
+
+    {% if emails|length == 0 %}
+    <div class="no-results-message">
+        <div class="empty-icon">
+            <i class="fas fa-search"></i>
+        </div>
+        <h3>No emails found</h3>
+        <p>{% if search %}No emails matching "{{ search }}"{% else %}This folder is empty{% endif %}</p>
+    </div>
+    {% endif %}
+
+{% else %}
+    <div class="no-results-message">
+        <div class="empty-icon">
+            <i class="fas fa-inbox"></i>
+        </div>
+        <h3>No emails found</h3>
+        <p>{% if search %}No emails matching "{{ search }}"{% else %}This folder is empty{% endif %}</p>
+    </div>
+{% endif %}

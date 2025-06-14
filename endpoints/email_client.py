@@ -163,19 +163,128 @@ class EmailClient:
             self.smtp = None
 
     def get_folders(self):
+        """Get all available mailbox folders with proper hierarchy structure."""
         imap = self.connect_imap()
-        status, folders = imap.list()
+        status, folders_raw = imap.list()
 
         if status != 'OK':
             raise Exception("Failed to get folders")
 
-        folder_list = []
-        for folder in folders:
-            parts = folder.decode().split(' "." ')
-            if len(parts) > 1:
-                name = parts[1].strip('"')
-                folder_list.append(name)
-        return folder_list
+        # First pass: collect all folder names and identify delimiter
+        all_folders = []
+        delimiter = '.'  # Default delimiter
+
+        for folder_raw in folders_raw:
+            try:
+                # Parse folder data
+                decoded = folder_raw.decode('utf-8', errors='replace')
+
+                # Identify delimiter - common ones are ".", "/", or sometimes "%"
+                if '"."' in decoded:
+                    delimiter = '.'
+                elif '"/"' in decoded:
+                    delimiter = '/'
+                elif '"%"' in decoded:
+                    delimiter = '%'
+
+                # Extract folder name using regex to be more reliable
+                import re
+                match = re.search(r'"([^"]+)"$', decoded)
+                if match:
+                    folder_name = match.group(1)
+                    all_folders.append(folder_name)
+                    continue
+
+                # Fallback extraction methods if regex didn't work
+                if '"' in decoded:
+                    parts = decoded.split('"')
+                    if len(parts) >= 4:
+                        folder_name = parts[3].strip()
+                        all_folders.append(folder_name)
+                        continue
+
+                # Last resort extraction
+                parts = decoded.split()
+                if len(parts) > 0:
+                    folder_name = parts[-1].strip('"')
+                    all_folders.append(folder_name)
+
+            except Exception as e:
+                current_app.logger.warning(f"Error parsing folder: {str(e)} - {folder_raw}")
+                continue
+
+        # Second pass: organize folders into hierarchy
+        folder_structure = []
+        folder_map = {}  # To track parent-child relationships
+
+        # Common standard folder names to look for (including variations)
+        standard_folders = {
+            'inbox': ['inbox', 'eingang', 'reception', 'entrada', 'in'],
+            'sent': ['sent', 'sent items', 'sent mail', 'gesendet', 'enviado', 'envoyé'],
+            'drafts': ['draft', 'drafts', 'entwurf', 'entwürfe', 'borradores', 'brouillons'],
+            'trash': ['trash', 'deleted', 'deleted items', 'papierkorb', 'gelöscht', 'eliminado', 'corbeille'],
+            'junk': ['junk', 'spam', 'junk mail', 'spamordner', 'correo no deseado', 'indésirables'],
+            'archive': ['archive', 'archiv', 'archivo', 'archivage']
+        }
+
+        # Helper to normalize folder names for comparison
+        def normalize_folder(name):
+            return name.lower()
+
+        # Identify folder type for icons and standard sorting
+        def identify_folder_type(folder_name):
+            norm_name = normalize_folder(folder_name)
+            for folder_type, variations in standard_folders.items():
+                if any(variation in norm_name for variation in variations):
+                    return folder_type
+            return 'folder'  # Default type
+
+        # Process folders to build hierarchy
+        for folder_name in sorted(all_folders, key=str.lower):
+            folder_info = {
+                'name': folder_name,
+                'display_name': folder_name.split(delimiter)[-1] if delimiter in folder_name else folder_name,
+                'type': identify_folder_type(folder_name),
+                'children': [],
+                'path': folder_name,
+                'has_children': False
+            }
+
+            # Check if this is a child folder
+            parent_path = delimiter.join(folder_name.split(delimiter)[:-1])
+            if parent_path and parent_path in folder_map:
+                folder_map[parent_path]['has_children'] = True
+                folder_map[parent_path]['children'].append(folder_info)
+            else:
+                folder_structure.append(folder_info)
+
+            # Add to folder map for building hierarchy
+            folder_map[folder_name] = folder_info
+
+        # Sort top-level folders: INBOX first, then standard folders, then others
+        def folder_sort_key(folder):
+            if normalize_folder(folder['name']) == 'inbox':
+                return '0'
+            elif folder['type'] != 'folder':
+                # Standard folders come after inbox but before custom folders
+                return f'1{folder["name"].lower()}'
+            else:
+                return f'2{folder["name"].lower()}'
+
+        folder_structure.sort(key=folder_sort_key)
+
+        # If no folders were found (unlikely), add INBOX as fallback
+        if not folder_structure:
+            folder_structure.append({
+                'name': 'INBOX',
+                'display_name': 'INBOX',
+                'type': 'inbox',
+                'children': [],
+                'path': 'INBOX',
+                'has_children': False
+            })
+
+        return folder_structure
 
     def get_emails(self, folder='INBOX', limit=50, offset=0, search_criteria=None):
         imap = self.connect_imap()
@@ -782,3 +891,199 @@ def api_attachment(folder, email_id, filename):
     except Exception as e:
         current_app.logger.error(f"Error fetching attachment: {str(e)}")
         return jsonify({'error': str(e)}), 500
+
+@email_bp.route('/api/folders/render')
+@login_required
+def api_folders_render():
+    """Render the folder tree HTML partial for AJAX requests"""
+    from database.identity.models import EmailSettings
+    from flask import render_template
+
+    settings = EmailSettings.query.filter_by(user_id=current_user.id).first()
+    if not settings:
+        return jsonify({'error': 'Email not configured'}), 400
+
+    try:
+        client = EmailClient(
+            settings.imap_server,
+            settings.smtp_server,
+            settings.username,
+            settings.password,
+            settings.imap_port,
+            settings.smtp_port
+        )
+
+        folders = client.get_folders()
+        client.disconnect()
+
+        # Helper function to check if a folder is an ancestor of the active folder
+        def is_ancestor(folder, active_folder_path):
+            for child in folder.get('children', []):
+                if child['path'] == active_folder_path or is_ancestor(child, active_folder_path):
+                    return True
+            return False
+
+        # Helper function to get folder icon
+        def folder_icon(folder_type):
+            icon_map = {
+                'inbox': 'fa-inbox',
+                'sent': 'fa-paper-plane',
+                'drafts': 'fa-file-alt',
+                'trash': 'fa-trash-alt',
+                'junk': 'fa-ban',
+                'archive': 'fa-archive',
+                'folder': 'fa-folder'
+            }
+            return icon_map.get(folder_type, 'fa-folder')
+
+        # Get current folder from the request
+        active_folder = request.args.get('active_folder', 'INBOX')
+
+        # Render the folder list template with the folder data
+        html = render_template(
+            'emailclient/partials/folder_list.html',
+            folders=folders,
+            active_folder=active_folder,
+            level=0,
+            is_ancestor=is_ancestor,
+            folder_icon=folder_icon
+        )
+
+        return jsonify({'html': html})
+    except Exception as e:
+        current_app.logger.error(f"Error fetching folders for render: {str(e)}")
+        return jsonify({'error': str(e)}), 500
+
+@email_bp.route('/api/emails/render')
+@login_required
+def api_emails_render():
+    """Render the email list HTML partial for AJAX requests"""
+    from database.identity.models import EmailSettings
+    from flask import render_template
+
+    settings = EmailSettings.query.filter_by(user_id=current_user.id).first()
+    if not settings:
+        return jsonify({'error': 'Email not configured'}), 400
+
+    folder = request.args.get('folder', 'INBOX')
+    page = request.args.get('page', 1, type=int)
+    limit = request.args.get('limit', 20, type=int)
+    search = request.args.get('search', '')
+
+    offset = (page - 1) * limit
+
+    try:
+        client = EmailClient(
+            settings.imap_server,
+            settings.smtp_server,
+            settings.username,
+            settings.password,
+            settings.imap_port,
+            settings.smtp_port
+        )
+
+        search_criteria = None
+        if search:
+            search_criteria = f'(OR SUBJECT "{search}" FROM "{search}")'
+
+        emails, total = client.get_emails(folder=folder, limit=limit, offset=offset, search_criteria=search_criteria)
+        client.disconnect()
+
+        # Render the email list template with the email data
+        html = render_template(
+            'emailclient/partials/email_list.html',
+            emails=emails,
+            folder=folder,
+            search=search
+        )
+
+        # Calculate total pages for pagination
+        total_pages = (total // limit) + (1 if total % limit else 0)
+
+        return jsonify({
+            'html': html,
+            'total': total,
+            'page': page,
+            'pages': total_pages
+        })
+    except Exception as e:
+        current_app.logger.error(f"Error fetching emails for render: {str(e)}")
+        return jsonify({'error': str(e)}), 500
+
+@email_bp.route('/api/email/render/<folder>/<email_id>')
+@login_required
+def api_email_render(folder, email_id):
+    """Render the email content HTML partial for AJAX requests"""
+    from database.identity.models import EmailSettings
+    from flask import render_template
+
+    settings = EmailSettings.query.filter_by(user_id=current_user.id).first()
+    if not settings:
+        return jsonify({'error': 'Email not configured'}), 400
+
+    try:
+        client = EmailClient(
+            settings.imap_server,
+            settings.smtp_server,
+            settings.username,
+            settings.password,
+            settings.imap_port,
+            settings.smtp_port
+        )
+
+        email_data = client.get_email(email_id, folder)
+        client.disconnect()
+
+        # Render the email content template with the email data
+        html = render_template(
+            'emailclient/partials/email_content.html',
+            email=email_data
+        )
+
+        return jsonify({
+            'html': html,
+            'email': email_data  # Include raw data for JS processing
+        })
+    except Exception as e:
+        current_app.logger.error(f"Error fetching email for render: {str(e)}")
+        return jsonify({'error': str(e)}), 500
+
+@email_bp.route('/api/unread-count')
+@login_required
+def api_unread_count():
+    """Get the count of unread emails for the navigation bar badge"""
+    from database.identity.models import EmailSettings
+
+    settings = EmailSettings.query.filter_by(user_id=current_user.id).first()
+    if not settings:
+        return jsonify({'unread_count': 0})
+
+    try:
+        client = EmailClient(
+            settings.imap_server,
+            settings.smtp_server,
+            settings.username,
+            settings.password,
+            settings.imap_port,
+            settings.smtp_port
+        )
+
+        # Connect and select inbox
+        imap = client.connect_imap()
+        imap.select('INBOX')
+
+        # Search for unread messages
+        status, data = imap.search(None, 'UNSEEN')
+
+        unread_count = 0
+        if status == 'OK':
+            # Count unread messages
+            unread_count = len(data[0].split())
+
+        client.disconnect()
+
+        return jsonify({'unread_count': unread_count})
+    except Exception as e:
+        current_app.logger.error(f"Error checking unread emails: {str(e)}")
+        return jsonify({'unread_count': 0, 'error': str(e)}), 500
+

@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="description" content="J.E.D.I. - Just Enough Device Interface">
     <meta name="theme-color" content="#6e07f3">
+    <meta name="csrf-token" content="{{ csrf_token()|tojson|safe }}">
     <title>{% block title %}J.E.D.I.{% endblock %}</title>
     <!-- Favicon -->
     <link rel="icon" type="image/png" href="{{ url_for('static', filename='images/favicon.png') }}">
@@ -74,6 +75,11 @@
             }, 5000);
         });
     </script>
+
+    <!-- Email notification badge handler -->
+    {% if current_user.is_authenticated and current_user.email_settings %}
+    <script src="{{ url_for('static', filename='js/navbar-email.js') }}"></script>
+    {% endif %}
 
     {% block scripts %}{% endblock %}
 </body>

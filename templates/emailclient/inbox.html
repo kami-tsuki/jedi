@@ -1,131 +1,315 @@
 {% extends 'base.html' %}
 
-{% block title %}{{ folder }} - Email - J.E.D.I.{% endblock %}
+{% block title %}Email - J.E.D.I.{% endblock %}
 
 {% block extra_head %}
 <link rel="stylesheet" href="{{ url_for('static', filename='css/email.css') }}">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 {% endblock %}
 
 {% block content %}
-<div class="email-client-container" id="emailApp">
-    <div class="email-sidebar">
-        <div class="email-actions">
-            <a href="{{ url_for('email.compose') }}" class="btn btn-primary compose-btn">
-                <i class="fas fa-pen"></i> Compose
-            </a>
-
-            <a href="{{ url_for('email.setup') }}" class="btn btn-outline settings-btn">
-                <i class="fas fa-cog"></i> Settings
-            </a>
-        </div>
-
-        <div class="folder-list" id="folderList">
-            <div class="folder-heading">
-                <h3>Folders</h3>
-                <span class="refresh-icon" id="refreshFolders">
-                    <i class="fas fa-sync-alt"></i>
-                </span>
-            </div>
-            <ul class="folders">
-                <li class="folder-item loading">
-                    <i class="fas fa-circle-notch fa-spin"></i> Loading folders...
-                </li>
-            </ul>
-        </div>
+<div class="email-app" id="emailApp">
+    <!-- Mobile navigation toggle buttons -->
+    <div class="mobile-nav-toggles">
+        <button id="toggleFolders" class="mobile-toggle-btn">
+            <i class="fas fa-folder"></i>
+        </button>
+        <h2 class="mobile-app-title">Email</h2>
+        <button id="toggleSearch" class="mobile-toggle-btn">
+            <i class="fas fa-search"></i>
+        </button>
     </div>
 
-    <div class="email-main">
-        <div class="email-header">
-            <div class="folder-title">
-                <h2><i class="fas fa-folder"></i> {{ folder }}</h2>
+    <!-- Folder sidebar (left) -->
+    <aside class="email-sidebar" id="emailSidebar">
+        <div class="sidebar-header">
+            <button class="compose-btn btn-primary" id="composeButton">
+                <i class="fas fa-pen"></i> <span class="compose-text">Compose</span>
+            </button>
+        </div>
+
+        <nav class="folder-navigation">
+            <div class="folder-section">
+                <div class="folder-heading">
+                    <h3>Folders</h3>
+                    <button class="refresh-btn" id="refreshFolders" title="Refresh folders">
+                        <i class="fas fa-sync-alt"></i>
+                    </button>
+                </div>
+                <ul class="folder-list" id="folderTree">
+                    <li class="folder-item loading">
+                        <div class="loading-spinner">
+                            <i class="fas fa-circle-notch fa-spin"></i>
+                        </div>
+                        <span>Loading folders...</span>
+                    </li>
+                </ul>
             </div>
-            <div class="email-search">
-                <form id="searchForm">
-                    <div class="search-container">
-                        <input type="text" id="searchInput" placeholder="Search emails..."
-                               value="{{ search }}">
-                        <button type="submit">
-                            <i class="fas fa-search"></i>
+        </nav>
+
+        <div class="sidebar-footer">
+            <button class="settings-btn" id="settingsButton">
+                <i class="fas fa-cog"></i>
+                <span>Settings</span>
+            </button>
+        </div>
+    </aside>
+
+    <!-- Main content area -->
+    <main class="email-main">
+        <!-- Email list panel -->
+        <section class="email-list-panel" id="emailListPanel">
+            <header class="email-list-header">
+                <div class="folder-info">
+                    <h2 id="currentFolderTitle">
+                        <i class="folder-icon fas" id="currentFolderIcon"></i>
+                        <span id="currentFolderName">{{ folder }}</span>
+                    </h2>
+                    <span class="email-count" id="emailCount"></span>
+                </div>
+
+                <div class="email-actions-bar">
+                    <!-- Search bar (expandable on mobile) -->
+                    <div class="search-wrapper" id="searchWrapper">
+                        <form id="searchForm" class="search-form">
+                            <input type="text" id="searchInput" placeholder="Search emails..." value="{{ search }}">
+                            <button type="submit" class="search-btn">
+                                <i class="fas fa-search"></i>
+                            </button>
+                            <button type="button" class="clear-search" id="clearSearch">
+                                <i class="fas fa-times"></i>
+                            </button>
+                        </form>
+                    </div>
+
+                    <div class="action-buttons">
+                        <button id="refreshEmails" class="action-btn" title="Refresh emails">
+                            <i class="fas fa-sync-alt"></i>
+                        </button>
+                        <button id="filterEmails" class="action-btn" title="Filter emails">
+                            <i class="fas fa-filter"></i>
+                        </button>
+                        <button id="viewOptions" class="action-btn" title="View options">
+                            <i class="fas fa-ellipsis-v"></i>
                         </button>
                     </div>
-                </form>
+                </div>
+            </header>
+
+            <div class="email-list-scroll">
+                <div class="email-list-container">
+                    <!-- Email selection toolbar (appears when items selected) -->
+                    <div class="selection-toolbar" id="selectionToolbar">
+                        <div class="selection-count">
+                            <span id="selectedCount">0</span> selected
+                        </div>
+                        <div class="selection-actions">
+                            <button class="selection-action" title="Mark as read">
+                                <i class="fas fa-envelope-open"></i>
+                            </button>
+                            <button class="selection-action" title="Move to folder">
+                                <i class="fas fa-folder-open"></i>
+                            </button>
+                            <button class="selection-action" title="Delete">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                            <button class="selection-action" title="More actions">
+                                <i class="fas fa-ellipsis-h"></i>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Email list -->
+                    <div id="emailList" class="email-list" data-folder="{{ folder }}" data-page="1" data-search="{{ search }}">
+                        <div class="loading-state">
+                            <div class="loading-spinner">
+                                <i class="fas fa-circle-notch fa-spin"></i>
+                            </div>
+                            <span>Loading emails...</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Pagination -->
+                <div id="emailPagination" class="pagination-container"></div>
             </div>
-            <div class="email-actions">
-                <button id="refreshEmails" class="action-btn" title="Refresh">
-                    <i class="fas fa-sync-alt"></i>
+        </section>
+
+        <!-- Email content panel -->
+        <section class="email-content-panel" id="emailContentPanel">
+            <!-- Back button for mobile view -->
+            <div class="mobile-back-nav">
+                <button id="backToList" class="back-btn">
+                    <i class="fas fa-arrow-left"></i> Back to Emails
                 </button>
             </div>
-        </div>
 
-        <div class="email-list-container">
-            <div id="emailList" class="email-list" data-folder="{{ folder }}" data-page="{{ page }}" data-search="{{ search }}">
-                <div class="loading-indicator">
+            <!-- Email content -->
+            <div id="emailContent" class="email-content-container">
+                <div class="email-placeholder">
+                    <div class="placeholder-icon">
+                        <i class="far fa-envelope"></i>
+                    </div>
+                    <h3>Select an email to read</h3>
+                    <p>Choose an email from the list to view its contents here.</p>
+                </div>
+            </div>
+        </section>
+    </main>
+</div>
+
+<!-- Compose email modal -->
+<div id="composeModal" class="modal" role="dialog" aria-labelledby="composeModalTitle">
+    <div class="modal-content compose-modal">
+        <header class="modal-header">
+            <h3 id="composeModalTitle"><i class="fas fa-pen"></i> Compose Email</h3>
+            <button class="close-modal" id="closeComposeModal" aria-label="Close compose email">
+                <i class="fas fa-times"></i>
+            </button>
+        </header>
+        <div class="modal-body compose-container" id="composeContainer">
+            <!-- Compose form will be loaded here -->
+            <div class="loading-state">
+                <div class="loading-spinner">
                     <i class="fas fa-circle-notch fa-spin"></i>
-                    <span>Loading emails...</span>
                 </div>
-            </div>
-
-            <div id="pagination" class="pagination">
-                <!-- Pagination will be inserted by JavaScript -->
-            </div>
-        </div>
-
-        <div id="noEmails" class="no-emails-message" style="display: none;">
-            <div class="empty-state">
-                <div class="icon">
-                    <i class="fas fa-inbox"></i>
-                </div>
-                <h3>No emails found</h3>
-                <p>This folder is empty or no emails match your search.</p>
-                <button id="clearSearch" class="btn btn-outline" style="display: none;">
-                    <i class="fas fa-times"></i> Clear Search
-                </button>
+                <span>Loading compose form...</span>
             </div>
         </div>
     </div>
 </div>
 
-<!-- Email action modal -->
-<div id="emailActionModal" class="modal">
-    <div class="modal-content">
-        <div class="modal-header">
-            <h3>Email Actions</h3>
-            <span class="close-modal">&times;</span>
-        </div>
-        <div class="modal-body">
-            <div class="action-buttons">
-                <button id="moveEmailBtn" class="modal-btn">
-                    <i class="fas fa-folder-open"></i> Move to Folder
-                </button>
-                <button id="deleteEmailBtn" class="modal-btn modal-btn-danger">
-                    <i class="fas fa-trash"></i> Delete
-                </button>
-            </div>
-            <div id="folderSelectContainer" style="display: none;">
-                <div class="form-group">
-                    <label>Select destination folder:</label>
-                    <select id="folderSelect" class="form-control">
-                        <!-- Folders will be loaded dynamically -->
-                    </select>
+<!-- Settings modal -->
+<div id="settingsModal" class="modal" role="dialog" aria-labelledby="settingsModalTitle">
+    <div class="modal-content settings-modal">
+        <header class="modal-header">
+            <h3 id="settingsModalTitle"><i class="fas fa-cog"></i> Email Settings</h3>
+            <button class="close-modal" id="closeSettingsModal" aria-label="Close settings">
+                <i class="fas fa-times"></i>
+            </button>
+        </header>
+        <div class="modal-body settings-container" id="settingsContainer">
+            <!-- Settings form will be loaded here -->
+            <div class="loading-state">
+                <div class="loading-spinner">
+                    <i class="fas fa-circle-notch fa-spin"></i>
                 </div>
-                <button id="confirmMoveBtn" class="modal-btn">
-                    <i class="fas fa-check"></i> Move
-                </button>
-                <button id="cancelMoveBtn" class="modal-btn modal-btn-outline">
-                    <i class="fas fa-times"></i> Cancel
-                </button>
+                <span>Loading settings...</span>
             </div>
         </div>
+    </div>
+</div>
+
+<!-- Delete confirmation modal -->
+<div id="deleteModal" class="modal" role="dialog" aria-labelledby="deleteModalTitle">
+    <div class="modal-content delete-modal">
+        <header class="modal-header">
+            <h3 id="deleteModalTitle"><i class="fas fa-trash-alt"></i> Delete Email</h3>
+            <button class="close-modal" id="closeDeleteModal" aria-label="Close delete confirmation">
+                <i class="fas fa-times"></i>
+            </button>
+        </header>
+        <div class="modal-body">
+            <p>Are you sure you want to delete this email?</p>
+            <div class="modal-actions">
+                <button id="cancelDeleteBtn" class="btn btn-outline">Cancel</button>
+                <button id="confirmDeleteBtn" class="btn btn-danger">Delete</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Move to folder modal -->
+<div id="moveModal" class="modal" role="dialog" aria-labelledby="moveModalTitle">
+    <div class="modal-content move-modal">
+        <header class="modal-header">
+            <h3 id="moveModalTitle"><i class="fas fa-folder-open"></i> Move to Folder</h3>
+            <button class="close-modal" id="closeMoveModal" aria-label="Close move to folder">
+                <i class="fas fa-times"></i>
+            </button>
+        </header>
+        <div class="modal-body">
+            <div id="folderSelect" class="folder-select-list">
+                <div class="loading-state">
+                    <div class="loading-spinner">
+                        <i class="fas fa-circle-notch fa-spin"></i>
+                    </div>
+                    <span>Loading folders...</span>
+                </div>
+            </div>
+            <div class="modal-actions">
+                <button id="cancelMoveBtn" class="btn btn-outline">Cancel</button>
+                <button id="confirmMoveBtn" class="btn btn-primary">Move</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Filter menu dropdown -->
+<div id="filterMenu" class="dropdown-menu">
+    <div class="dropdown-header">Filter Emails</div>
+    <div class="dropdown-item">
+        <label>
+            <input type="checkbox" class="filter-option" value="unread"> Unread only
+        </label>
+    </div>
+    <div class="dropdown-item">
+        <label>
+            <input type="checkbox" class="filter-option" value="has-attachments"> With attachments
+        </label>
+    </div>
+    <div class="dropdown-divider"></div>
+    <div class="dropdown-item">
+        <label>Sort by</label>
+        <select id="sortOptions" class="sort-dropdown">
+            <option value="date-desc">Newest first</option>
+            <option value="date-asc">Oldest first</option>
+            <option value="sender">Sender</option>
+            <option value="subject">Subject</option>
+        </select>
+    </div>
+    <div class="dropdown-footer">
+        <button id="applyFilters" class="btn btn-sm btn-primary">Apply</button>
+        <button id="resetFilters" class="btn btn-sm btn-outline">Reset</button>
     </div>
 </div>
 {% endblock %}
 
 {% block scripts %}
 <script src="{{ url_for('static', filename='js/email.js') }}"></script>
+<script src="{{ url_for('static', filename='js/email-actions.js') }}"></script>
 <script>
     document.addEventListener('DOMContentLoaded', function() {
-        // Initialize the email folder view
-        initializeEmailView();
+        // Initialize email client with folder and search parameters
+        EmailClient.init({
+            folder: '{{ folder }}',
+            search: '{{ search }}',
+            page: {{ request.args.get('page', 1) }}
+        });
+
+        // Initialize email actions
+        EmailActions.init();
+
+        // Mobile navigation handlers
+        document.getElementById('toggleFolders').addEventListener('click', function() {
+            document.getElementById('emailApp').classList.toggle('show-sidebar');
+        });
+
+        document.getElementById('toggleSearch').addEventListener('click', function() {
+            document.getElementById('searchWrapper').classList.toggle('expanded');
+            document.getElementById('searchInput').focus();
+        });
+
+        document.getElementById('backToList').addEventListener('click', function() {
+            document.getElementById('emailContentPanel').classList.remove('active');
+            document.getElementById('emailListPanel').classList.remove('hidden');
+        });
+
+        // Clear search button
+        document.getElementById('clearSearch').addEventListener('click', function() {
+            document.getElementById('searchInput').value = '';
+            document.getElementById('searchForm').submit();
+        });
     });
 </script>
 {% endblock %}
