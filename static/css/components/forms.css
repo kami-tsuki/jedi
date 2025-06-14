@@ -1,0 +1,132 @@
+/* Component: Forms */
+@import '../core/variables.css';
+
+/* Form Containers */
+.form-container {
+    max-width: 500px;
+    margin: 0 auto;
+}
+
+/* Form Groups */
+.form-group {
+    margin-bottom: 1.5rem;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 0.75rem;
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
+.form-control {
+    width: 100%;
+    padding: 0.85rem 1rem;
+    font-size: 1rem;
+    border: 1px solid var(--border);
+    border-radius: var(--border-radius);
+    transition: var(--transition);
+}
+
+.form-control:focus {
+    border-color: var(--primary);
+    box-shadow: 0 0 0 3px rgba(110, 7, 243, 0.2);
+    outline: none;
+}
+
+.form-control.error {
+    border-color: var(--danger);
+}
+
+/* Checkboxes and Radio buttons */
+.checkbox {
+    display: flex;
+    align-items: center;
+    margin-top: 1rem;
+    margin-bottom: 1.5rem;
+}
+
+.checkbox input[type="checkbox"] {
+    margin-right: 0.75rem;
+    height: 18px;
+    width: 18px;
+    accent-color: var(--primary);
+}
+
+.checkbox label {
+    font-weight: 500;
+    color: var(--text-secondary);
+}
+
+/* Form validation and messages */
+.error-message {
+    color: var(--danger);
+    font-size: 0.875rem;
+    display: block;
+    margin-top: 0.35rem;
+}
+
+.help-text {
+    color: var(--text-light);
+    font-size: 0.875rem;
+    margin-top: 0.35rem;
+}
+
+/* Auth Forms */
+.auth-form {
+    max-width: 500px;
+    margin: 0 auto;
+    background-color: var(--light-color);
+    padding: 2.5rem;
+    border-radius: var(--border-radius);
+    box-shadow: var(--shadow-md);
+    transition: var(--transition);
+}
+
+.auth-form:hover {
+    box-shadow: var(--shadow-lg);
+}
+
+.auth-form h2 {
+    text-align: center;
+    margin-top: 0;
+    margin-bottom: 2rem;
+    color: var(--text);
+    font-size: 1.8rem;
+    font-weight: 600;
+}
+
+.auth-links {
+    margin-top: 2rem;
+    text-align: center;
+    font-size: 0.95rem;
+}
+
+/* Password Strength Meter */
+.password-strength-meter {
+    margin-top: 0.5rem;
+    margin-bottom: 1rem;
+}
+
+.strength-bars {
+    display: flex;
+    gap: 5px;
+    margin-bottom: 5px;
+}
+
+.strength-segment {
+    height: 4px;
+    flex: 1;
+    background-color: #e2e8f0;
+    border-radius: 2px;
+    transition: var(--transition);
+}
+
+.strength-segment.active {
+    background-color: var(--success);
+}
+
+.strength-text {
+    font-size: 0.75rem;
+    color: var(--text-secondary);
+}

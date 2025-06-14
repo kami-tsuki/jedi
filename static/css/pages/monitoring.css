@@ -1,0 +1,246 @@
+/* Monitoring Dashboard Styles */
+@import '../core/variables.css';
+@import '../components/buttons.css';
+@import '../components/cards.css';
+@import '../components/notifications.css';
+
+/* Main Container */
+.monitoring-container {
+  padding: 1.5rem;
+}
+
+.monitoring-header {
+  margin-bottom: 2rem;
+  position: relative;
+  padding-bottom: 0.5rem;
+  border-bottom: 2px solid var(--secondary);
+}
+
+.monitoring-header h1 {
+  color: var(--text);
+  font-size: 2.2rem;
+  margin-bottom: 0.5rem;
+}
+
+.monitoring-header p {
+  color: var(--text-secondary);
+  font-size: 1.1rem;
+}
+
+/* Monitor Cards */
+.monitor-card {
+  background: var(--card-bg);
+  border-radius: var(--border-radius);
+  box-shadow: var(--shadow-md);
+  margin-bottom: 1.5rem;
+  transition: transform var(--transition), box-shadow var(--transition);
+  overflow: hidden;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+.monitor-card:hover {
+  transform: translateY(-5px);
+  box-shadow: var(--shadow-lg);
+}
+
+.card-header {
+  background: linear-gradient(to right, var(--primary), var(--secondary));
+  color: white;
+  padding: 1rem 1.5rem;
+  position: relative;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.card-body {
+  padding: 1.5rem;
+  flex: 1;
+  overflow: auto;
+}
+
+/* Data Metrics */
+.metric-row {
+  display: flex;
+  flex-wrap: wrap;
+  margin: -0.75rem;
+}
+
+.metric-box {
+  flex: 1 1 200px;
+  margin: 0.75rem;
+  padding: 1.5rem;
+  background: var(--background);
+  border-radius: var(--border-radius);
+  text-align: center;
+  transition: all var(--transition);
+}
+
+.metric-box:hover {
+  background: var(--light-color);
+  box-shadow: var(--shadow-sm);
+}
+
+.metric-title {
+  font-size: 0.9rem;
+  color: var(--text-light);
+  margin-bottom: 0.5rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.metric-value {
+  font-size: 1.8rem;
+  font-weight: 600;
+  color: var(--text);
+  margin: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Tables */
+.monitor-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 1rem;
+}
+
+.monitor-table th {
+  background: rgba(52, 152, 219, 0.1);
+  color: var(--text);
+  font-weight: 600;
+  text-align: left;
+  padding: 0.8rem;
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+
+.monitor-table td {
+  padding: 0.8rem;
+  border-top: 1px solid var(--border-light);
+}
+
+.monitor-table tbody tr:hover {
+  background: rgba(52, 152, 219, 0.05);
+}
+
+/* Progress bars */
+.progress-container {
+  height: 8px;
+  background-color: var(--border-light);
+  border-radius: 4px;
+  margin: 0.5rem 0;
+  overflow: hidden;
+}
+
+.progress-bar {
+  height: 100%;
+  background: linear-gradient(to right, var(--primary), var(--secondary));
+  border-radius: 4px;
+  transition: width 0.5s ease-in-out;
+}
+
+.progress-bar.warning {
+  background: linear-gradient(to right, var(--warning), #e67e22);
+}
+
+.progress-bar.danger {
+  background: linear-gradient(to right, var(--danger), #c0392b);
+}
+
+/* Status indicators */
+.status-dot {
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  margin-right: 6px;
+}
+
+.status-running {
+  background-color: var(--success);
+}
+
+.status-stopped {
+  background-color: var(--warning);
+}
+
+.status-error {
+  background-color: var(--danger);
+}
+
+/* Loading animations */
+.loading-spinner {
+  width: 40px;
+  height: 40px;
+  border: 4px solid rgba(52, 152, 219, 0.2);
+  border-left-color: var(--secondary);
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+.loading-spinner.centered {
+  margin: 2rem auto;
+}
+
+/* Dashboard Grid Layout */
+.dashboard-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 1.5rem;
+}
+
+.dashboard-grid .wide-card {
+  grid-column: 1 / -1;
+}
+
+/* Tabs */
+.monitoring-tabs {
+  display: flex;
+  border-bottom: 2px solid var(--border-light);
+  margin-bottom: 1.5rem;
+  overflow-x: auto;
+  white-space: nowrap;
+}
+
+.tab-link {
+  padding: 0.8rem 1.5rem;
+  font-weight: 500;
+  color: var(--text-secondary);
+  cursor: pointer;
+  border-bottom: 3px solid transparent;
+  transition: all var(--transition);
+}
+
+.tab-link:hover {
+  color: var(--secondary);
+  background-color: rgba(52, 152, 219, 0.05);
+}
+
+.tab-link.active {
+  color: var(--secondary);
+  border-bottom-color: var(--secondary);
+}
+
+.monitoring-tab-content {
+  display: none;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .metric-box {
+    flex: 1 1 100%;
+  }
+
+  .monitor-table {
+    font-size: 0.9rem;
+  }
+
+  .card-header h2 {
+    font-size: 1.2rem;
+  }
+}

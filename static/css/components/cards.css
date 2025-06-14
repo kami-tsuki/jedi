@@ -1,0 +1,67 @@
+/* Component: Cards */
+@import '../core/variables.css';
+
+/* Base card styles */
+.card {
+    background: var(--card-bg);
+    border-radius: var(--border-radius);
+    box-shadow: var(--shadow-md);
+    padding: 1.5rem;
+    transition: var(--transition);
+    height: 100%;
+}
+
+.card:hover {
+    box-shadow: var(--shadow-lg);
+    transform: translateY(-3px);
+}
+
+.card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1rem;
+    padding-bottom: 1rem;
+    border-bottom: 1px solid var(--border-light);
+}
+
+.card-header h4 {
+    font-size: 1.25rem;
+    margin: 0;
+    display: flex;
+    align-items: center;
+}
+
+.card-header h4 i {
+    margin-right: 0.5rem;
+    color: var(--primary);
+}
+
+.card-content {
+    color: var(--text-secondary);
+}
+
+.card-footer {
+    margin-top: 1rem;
+    padding-top: 1rem;
+    border-top: 1px solid var(--border-light);
+    display: flex;
+    justify-content: flex-end;
+}
+
+/* Card variants */
+.card-primary {
+    border-top: 4px solid var(--primary);
+}
+
+.card-danger {
+    border-top: 4px solid var(--danger);
+}
+
+.card-info {
+    border-top: 4px solid var(--info);
+}
+
+.card-success {
+    border-top: 4px solid var(--success);
+}
