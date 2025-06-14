@@ -26,7 +26,7 @@
                     <i class="fas fa-sync-alt"></i>
                 </span>
             </div>
-            <ul class="folders">
+            <ul class="folders" id="folderTree">
                 <li class="folder-item loading">
                     <i class="fas fa-circle-notch fa-spin"></i> Loading folders...
                 </li>
@@ -58,12 +58,25 @@
 <script src="{{ url_for('static', filename='js/email.js') }}"></script>
 <script>
     document.addEventListener('DOMContentLoaded', function() {
-        // Load folders when the page loads
-        loadFolders();
+        // Initialize the EmailClient
+        if (typeof EmailClient !== 'undefined' && typeof EmailClient.init === 'function') {
+            // Initialize EmailClient with configuration options
+            EmailClient.init({
+                folder: 'INBOX',
+                page: 1
+            });
+
+            // Load folders after initialization
+            EmailClient.loadFolders();
+        } else {
+            console.error('EmailClient module not found or init method not available');
+        }
 
         // Set up refresh button
         document.getElementById('refreshFolders').addEventListener('click', function() {
-            loadFolders();
+            if (typeof EmailClient !== 'undefined' && typeof EmailClient.loadFolders === 'function') {
+                EmailClient.loadFolders();
+            }
         });
     });
 </script>

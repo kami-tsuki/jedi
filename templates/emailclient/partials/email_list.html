@@ -9,9 +9,10 @@
 
         <!-- Sender avatar -->
         <div class="sender-avatar" aria-hidden="true">
-            {% set sender_name = email.from.split('<')[0]|trim %}
-            {% if sender_name %}
-                {{ sender_name[0]|upper }}
+            {% if email.from.name %}
+                {{ email.from.name[0]|upper }}
+            {% elif email.from.email %}
+                {{ email.from.email[0]|upper }}
             {% else %}
                 ?
             {% endif %}
@@ -21,7 +22,7 @@
         <div class="email-content-preview">
             <!-- Sender and date -->
             <div class="email-meta">
-                <div class="email-sender">{{ email.from.split('<')[0]|trim }}</div>
+                <div class="email-sender">{{ email.from.name or email.from.email }}</div>
                 <time class="email-date" datetime="{{ email.date }}">{{ email.date }}</time>
 
                 <!-- Priority indicators -->
@@ -45,7 +46,13 @@
 
             <!-- Email body preview -->
             <div class="email-preview">
-                {{ email.body|striptags|truncate(120) }}
+                {% if email.body.plain %}
+                    {{ email.body.plain|striptags|truncate(120) }}
+                {% elif email.body.html %}
+                    {{ email.body.html|striptags|truncate(120) }}
+                {% else %}
+                    No content
+                {% endif %}
             </div>
         </div>
 

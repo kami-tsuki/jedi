@@ -8,21 +8,18 @@
             <!-- Sender information with avatar -->
             <div class="email-view-sender">
                 <div class="sender-avatar large">
-                    {% set sender_name = email.from.split('<')[0]|trim %}
-                    {% if sender_name %}
-                        {{ sender_name[0]|upper }}
+                    {% if email.from.name %}
+                        {{ email.from.name[0]|upper }}
+                    {% elif email.from.email %}
+                        {{ email.from.email[0]|upper }}
                     {% else %}
                         ?
                     {% endif %}
                 </div>
 
                 <div class="sender-details">
-                    <div class="sender-name">{{ email.from.split('<')[0]|trim }}</div>
-                    <div class="sender-address">
-                        {% if '<' in email.from and '>' in email.from %}
-                            {{ email.from.split('<')[1].split('>')[0] }}
-                        {% endif %}
-                    </div>
+                    <div class="sender-name">{{ email.from.name or email.from.email }}</div>
+                    <div class="sender-address">{{ email.from.email }}</div>
                 </div>
             </div>
 
@@ -170,13 +167,17 @@
 
     <!-- Email body content -->
     <div class="email-view-body">
-        {% if email.html_body %}
+        {% if email.body.html %}
             <div class="email-html-content">
-                {{ email.html_body|safe }}
+                {{ email.body.html|safe }}
+            </div>
+        {% elif email.body.plain %}
+            <div class="email-text-content">
+                {{ email.body.plain|nl2br|safe }}
             </div>
         {% else %}
             <div class="email-text-content">
-                {{ email.plain_body|nl2br|safe }}
+                <p>This email does not contain any content.</p>
             </div>
         {% endif %}
     </div>
