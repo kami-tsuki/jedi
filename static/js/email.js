@@ -11,6 +11,8 @@
  */
 
 const EmailClient = (function() {
+    'use strict';
+
     // Configuration and state
     let config = {
         folder: 'INBOX',
@@ -49,18 +51,14 @@ const EmailClient = (function() {
 
     /**
      * Initialize the email client
+     * @param {Object} options - Configuration options
      */
     function init(options = {}) {
         // Merge options with default config
         config = { ...config, ...options };
 
         // Initialize CSRF token from meta tag
-        const csrfMeta = document.querySelector('meta[name="csrf-token"]');
-        if (csrfMeta) {
-            config.csrfToken = csrfMeta.getAttribute('content');
-        } else {
-            console.warn('CSRF token meta tag not found. AJAX operations may fail.');
-        }
+        initializeCsrfToken();
 
         // Cache DOM elements
         cacheElements();
@@ -79,6 +77,18 @@ const EmailClient = (function() {
         updateUrl();
 
         console.log('Email client initialized with config:', config);
+    }
+
+    /**
+     * Initialize CSRF token from meta tag
+     */
+    function initializeCsrfToken() {
+        const csrfMeta = document.querySelector('meta[name="csrf-token"]');
+        if (csrfMeta) {
+            config.csrfToken = csrfMeta.getAttribute('content');
+        } else {
+            console.warn('CSRF token meta tag not found. AJAX operations may fail.');
+        }
     }
 
     /**
@@ -179,9 +189,9 @@ const EmailClient = (function() {
         // Handle escape key for modals
         document.addEventListener('keydown', function(e) {
             if (e.key === 'Escape') {
-                if (elements.composeModal.style.display === 'flex') closeComposeModal();
-                if (elements.settingsModal.style.display === 'flex') closeSettingsModal();
-                if (elements.deleteModal.style.display === 'flex') closeDeleteModal();
+                if (elements.composeModal && elements.composeModal.style.display === 'flex') closeComposeModal();
+                if (elements.settingsModal && elements.settingsModal.style.display === 'flex') closeSettingsModal();
+                if (elements.deleteModal && elements.deleteModal.style.display === 'flex') closeDeleteModal();
             }
         });
 
@@ -221,7 +231,7 @@ const EmailClient = (function() {
 
         // Add CSRF token for non-GET requests
         if (options.method && options.method !== 'GET') {
-            // Try to get CSRF token from meta tag
+            // Try to get CSRF token from meta tag if not already set
             if (!config.csrfToken) {
                 const csrfMeta = document.querySelector('meta[name="csrf-token"]');
                 if (csrfMeta) {
@@ -397,7 +407,7 @@ const EmailClient = (function() {
                 elements.folderTree.innerHTML = `
                     <li class="folder-item error">
                         <i class="fas fa-exclamation-circle"></i> Failed to load folders
-                        <button class="retry-btn" onclick="EmailClient.loadFolders()">Retry</button>
+                        <button class="retry-btn" onclick="EmailClient.retryLoadFolders()">Retry</button>
                     </li>
                 `;
 
@@ -466,6 +476,10 @@ const EmailClient = (function() {
 
     /**
      * Navigate to a specific folder
+     * @param {string} folderPath - Path to the folder to navigate to
+     * @param {number} page - Page number to display
+     * @param {string} search - Search query to filter emails
+     * @param {boolean} updateHistory - Whether to update browser history
      */
     function navigateToFolder(folderPath, page = 1, search = '', updateHistory = true) {
         if (folderPath === config.folder && page === config.page && search === config.search) {
@@ -505,6 +519,7 @@ const EmailClient = (function() {
 
     /**
      * Update the active state in the folder tree
+     * @param {string} activeFolderPath - Path of the active folder
      */
     function updateFolderActiveState(activeFolderPath) {
         const folderItems = elements.folderTree.querySelectorAll('.folder-item');
@@ -522,6 +537,9 @@ const EmailClient = (function() {
 
     /**
      * Load and render emails for the current folder
+     * @param {string} folder - Folder path
+     * @param {number} page - Page number
+     * @param {string} search - Search query
      */
     function loadEmails(folder = config.folder, page = config.page, search = config.search) {
         if (state.loading.emails) return;
@@ -646,6 +664,8 @@ const EmailClient = (function() {
 
     /**
      * Load and render email content
+     * @param {string} folder - Folder path
+     * @param {string} emailId - Email ID
      */
     function loadEmailContent(folder, emailId) {
         if (state.loading.content) return;
@@ -723,6 +743,8 @@ const EmailClient = (function() {
 
     /**
      * Show delete confirmation modal
+     * @param {string} folder - Folder path
+     * @param {string} emailId - Email ID
      */
     function promptDeleteEmail(folder, emailId) {
         // Store data for deletion
@@ -737,7 +759,9 @@ const EmailClient = (function() {
      * Close delete confirmation modal
      */
     function closeDeleteModal() {
-        elements.deleteModal.style.display = 'none';
+        if (elements.deleteModal) {
+            elements.deleteModal.style.display = 'none';
+        }
     }
 
     /**
@@ -817,6 +841,8 @@ const EmailClient = (function() {
 
     /**
      * Render pagination controls
+     * @param {number} currentPage - Current page number
+     * @param {number} totalPages - Total number of pages
      */
     function renderPagination(currentPage, totalPages) {
         if (!elements.emailPagination) return;
@@ -907,6 +933,7 @@ const EmailClient = (function() {
 
     /**
      * Search emails in the current folder
+     * @param {string} query - Search query
      */
     function searchEmails(query) {
         if (query === config.search) {
@@ -926,6 +953,7 @@ const EmailClient = (function() {
 
     /**
      * Open compose email modal
+     * @param {Object} options - Options for composing (replyTo, replyAll, forward)
      */
     function openComposeModal(options = {}) {
         // Load compose form content
@@ -937,7 +965,9 @@ const EmailClient = (function() {
         if (options.folder) params.append('folder', options.folder);
 
         // Show modal first so the loading indicator is visible
-        elements.composeModal.style.display = 'flex';
+        if (elements.composeModal) {
+            elements.composeModal.style.display = 'flex';
+        }
 
         // Fetch compose form
         safeFetch(`/email/compose?${params.toString()}`)
@@ -948,21 +978,23 @@ const EmailClient = (function() {
                 const doc = parser.parseFromString(html, 'text/html');
                 const formContent = doc.querySelector('.compose-form');
 
-                if (formContent) {
+                if (formContent && elements.composeContainer) {
                     elements.composeContainer.innerHTML = formContent.outerHTML;
                     setupComposeFormHandlers();
-                } else {
+                } else if (elements.composeContainer) {
                     elements.composeContainer.innerHTML = '<div class="error-message">Failed to load compose form</div>';
                 }
             })
             .catch(error => {
                 console.error('Error loading compose form:', error);
-                elements.composeContainer.innerHTML = `
-                    <div class="error-message">
-                        <p>Failed to load compose form. Please try again.</p>
-                        <button class="btn btn-primary" onclick="EmailClient.closeComposeModal()">Close</button>
-                    </div>
-                `;
+                if (elements.composeContainer) {
+                    elements.composeContainer.innerHTML = `
+                        <div class="error-message">
+                            <p>Failed to load compose form. Please try again.</p>
+                            <button class="btn btn-primary" onclick="EmailClient.closeComposeModal()">Close</button>
+                        </div>
+                    `;
+                }
             });
     }
 
@@ -970,15 +1002,19 @@ const EmailClient = (function() {
      * Close compose email modal
      */
     function closeComposeModal() {
-        elements.composeModal.style.display = 'none';
+        if (elements.composeModal) {
+            elements.composeModal.style.display = 'none';
 
-        // Reset the container for next time
-        elements.composeContainer.innerHTML = `
-            <div class="loading-container">
-                <i class="fas fa-circle-notch fa-spin loading-spinner"></i>
-                <div>Loading compose form...</div>
-            </div>
-        `;
+            // Reset the container for next time
+            if (elements.composeContainer) {
+                elements.composeContainer.innerHTML = `
+                    <div class="loading-container">
+                        <i class="fas fa-circle-notch fa-spin loading-spinner"></i>
+                        <div>Loading compose form...</div>
+                    </div>
+                `;
+            }
+        }
     }
 
     /**
@@ -997,6 +1033,7 @@ const EmailClient = (function() {
 
     /**
      * Send email via AJAX
+     * @param {HTMLElement} form - The form element
      */
     function sendEmail(form) {
         // Get form data
@@ -1054,7 +1091,9 @@ const EmailClient = (function() {
      */
     function openSettingsModal() {
         // Show modal first so the loading indicator is visible
-        elements.settingsModal.style.display = 'flex';
+        if (elements.settingsModal) {
+            elements.settingsModal.style.display = 'flex';
+        }
 
         // Fetch settings form
         safeFetch('/email/setup')
@@ -1065,21 +1104,23 @@ const EmailClient = (function() {
                 const doc = parser.parseFromString(html, 'text/html');
                 const formContent = doc.querySelector('.setup-card');
 
-                if (formContent) {
+                if (formContent && elements.settingsContainer) {
                     elements.settingsContainer.innerHTML = formContent.outerHTML;
                     setupSettingsFormHandlers();
-                } else {
+                } else if (elements.settingsContainer) {
                     elements.settingsContainer.innerHTML = '<div class="error-message">Failed to load settings form</div>';
                 }
             })
             .catch(error => {
                 console.error('Error loading settings form:', error);
-                elements.settingsContainer.innerHTML = `
-                    <div class="error-message">
-                        <p>Failed to load settings form. Please try again.</p>
-                        <button class="btn btn-primary" onclick="EmailClient.closeSettingsModal()">Close</button>
-                    </div>
-                `;
+                if (elements.settingsContainer) {
+                    elements.settingsContainer.innerHTML = `
+                        <div class="error-message">
+                            <p>Failed to load settings form. Please try again.</p>
+                            <button class="btn btn-primary" onclick="EmailClient.closeSettingsModal()">Close</button>
+                        </div>
+                    `;
+                }
             });
     }
 
@@ -1087,15 +1128,19 @@ const EmailClient = (function() {
      * Close settings modal
      */
     function closeSettingsModal() {
-        elements.settingsModal.style.display = 'none';
+        if (elements.settingsModal) {
+            elements.settingsModal.style.display = 'none';
 
-        // Reset the container for next time
-        elements.settingsContainer.innerHTML = `
-            <div class="loading-container">
-                <i class="fas fa-circle-notch fa-spin loading-spinner"></i>
-                <div>Loading settings...</div>
-            </div>
-        `;
+            // Reset the container for next time
+            if (elements.settingsContainer) {
+                elements.settingsContainer.innerHTML = `
+                    <div class="loading-container">
+                        <i class="fas fa-circle-notch fa-spin loading-spinner"></i>
+                        <div>Loading settings...</div>
+                    </div>
+                `;
+            }
+        }
     }
 
     /**
@@ -1150,6 +1195,8 @@ const EmailClient = (function() {
 
     /**
      * Retry loading email content
+     * @param {string} folder - Folder path
+     * @param {string} emailId - Email ID
      */
     function retryLoadContent(folder, emailId) {
         state.retries.content = 0; // Reset retry counter
@@ -1189,6 +1236,9 @@ const EmailClient = (function() {
         closeSettingsModal,
         promptDeleteEmail,
         closeDeleteModal,
-        confirmDeleteEmail
+        confirmDeleteEmail,
+        showEmailPlaceholder,
+        showToast
     };
 })();
+/*-神-*/

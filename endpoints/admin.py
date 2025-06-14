@@ -27,3 +27,4 @@ def admin_required(f):
 def admin():
     users = User.query.all()
     return render_template('admin/admin.html', title='Admin Dashboard', users=users)
+#-神-#

@@ -1086,4 +1086,4 @@ def api_unread_count():
     except Exception as e:
         current_app.logger.error(f"Error checking unread emails: {str(e)}")
         return jsonify({'unread_count': 0, 'error': str(e)}), 500
-
+#-神-#

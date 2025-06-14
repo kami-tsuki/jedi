@@ -1,8 +1,17 @@
 /**
  * Email Actions - Handles all email operations in the email client interface
+ *
+ * This module provides functionality for all interactive actions on emails:
+ * - Reply, reply all, forward
+ * - Delete and archive emails
+ * - Marking emails as unread/spam
+ * - Moving emails between folders
+ * - Custom dropdowns and tooltips for email actions
  */
 
 const EmailActions = (function() {
+    'use strict';
+
     // Configuration
     let config = {
         csrfToken: null,
@@ -10,7 +19,70 @@ const EmailActions = (function() {
         activeFolder: null
     };
 
-    // Handle dropdown toggle
+    /**
+     * Initialize the email actions module
+     * @param {Object} options - Initialization options
+     */
+    function init(options = {}) {
+        // Merge options
+        config.csrfToken = options.csrfToken || document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
+        config.activeEmailId = options.emailId;
+        config.activeFolder = options.folder;
+
+        // Initialize components
+        initDropdowns();
+        initTooltips();
+
+        if (config.activeEmailId && config.activeFolder) {
+            initEmailActions(config.activeEmailId, config.activeFolder);
+        }
+
+        // Set up event listeners for modals
+        setupModalHandlers();
+    }
+
+    /**
+     * Set up event handlers for modal dialogs
+     */
+    function setupModalHandlers() {
+        // Delete confirmation modal
+        document.getElementById('confirmDeleteBtn')?.addEventListener('click', confirmDelete);
+        document.getElementById('cancelDeleteBtn')?.addEventListener('click', function() {
+            document.getElementById('deleteModal')?.classList.remove('active');
+        });
+
+        // Move email modal
+        document.getElementById('confirmMoveBtn')?.addEventListener('click', confirmMove);
+        document.getElementById('cancelMoveBtn')?.addEventListener('click', function() {
+            document.getElementById('moveModal')?.classList.remove('active');
+        });
+        document.getElementById('closeMoveModal')?.addEventListener('click', function() {
+            document.getElementById('moveModal')?.classList.remove('active');
+        });
+
+        // Close modals when clicking outside
+        const modals = document.querySelectorAll('.modal');
+        modals.forEach(modal => {
+            modal.addEventListener('click', function(e) {
+                if (e.target === this) {
+                    this.classList.remove('active');
+                }
+            });
+        });
+
+        // Handle escape key for modals
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') {
+                document.querySelectorAll('.modal.active').forEach(modal => {
+                    modal.classList.remove('active');
+                });
+            }
+        });
+    }
+
+    /**
+     * Handle dropdown toggle functionality
+     */
     function initDropdowns() {
         document.addEventListener('click', function(e) {
             const dropdown = document.querySelector('.dropdown .dropdown-menu.active');
@@ -24,22 +96,26 @@ const EmailActions = (function() {
             // Toggle dropdown when clicking the dropdown button
             if (dropdownToggle) {
                 const menu = dropdownToggle.nextElementSibling;
-                if (menu.classList.contains('active')) {
-                    menu.classList.remove('active');
-                } else {
-                    // Close all other dropdowns first
-                    document.querySelectorAll('.dropdown-menu.active').forEach(item => {
-                        item.classList.remove('active');
-                    });
-                    menu.classList.add('active');
+                if (menu) {
+                    if (menu.classList.contains('active')) {
+                        menu.classList.remove('active');
+                    } else {
+                        // Close all other dropdowns first
+                        document.querySelectorAll('.dropdown-menu.active').forEach(item => {
+                            item.classList.remove('active');
+                        });
+                        menu.classList.add('active');
+                    }
+                    e.preventDefault();
+                    e.stopPropagation();
                 }
-                e.preventDefault();
-                e.stopPropagation();
             }
         });
     }
 
-    // Initialize tooltips
+    /**
+     * Initialize tooltips for buttons with title attributes
+     */
     function initTooltips() {
         const buttons = document.querySelectorAll('[title]');
         buttons.forEach(button => {
@@ -50,6 +126,10 @@ const EmailActions = (function() {
         });
     }
 
+    /**
+     * Show tooltip when hovering over an element
+     * @param {Event} e - Mouse event
+     */
     function showTooltip(e) {
         const title = this.getAttribute('title');
         if (!title) return;
@@ -73,6 +153,9 @@ const EmailActions = (function() {
         this._tooltip = tooltip;
     }
 
+    /**
+     * Hide tooltip when mouse leaves the element
+     */
     function hideTooltip() {
         if (this._tooltip) {
             document.body.removeChild(this._tooltip);
@@ -86,7 +169,11 @@ const EmailActions = (function() {
         }
     }
 
-    // Initialize email action buttons
+    /**
+     * Initialize email action buttons
+     * @param {string} emailId - ID of the active email
+     * @param {string} folder - Folder containing the email
+     */
     function initEmailActions(emailId, folder) {
         config.activeEmailId = emailId || config.activeEmailId;
         config.activeFolder = folder || config.activeFolder;
@@ -146,7 +233,9 @@ const EmailActions = (function() {
         document.getElementById('showOriginal')?.addEventListener('click', handleShowOriginal);
     }
 
-    // Handler for reply button
+    /**
+     * Handler for reply button
+     */
     function handleReply() {
         if (!config.activeEmailId || !config.activeFolder) {
             showNotification('No email selected', 'error');
@@ -155,7 +244,9 @@ const EmailActions = (function() {
         window.location.href = `/email/compose?reply_to=${config.activeEmailId}&folder=${config.activeFolder}`;
     }
 
-    // Handler for reply all button
+    /**
+     * Handler for reply all button
+     */
     function handleReplyAll() {
         if (!config.activeEmailId || !config.activeFolder) {
             showNotification('No email selected', 'error');
@@ -164,7 +255,9 @@ const EmailActions = (function() {
         window.location.href = `/email/compose?reply_to=${config.activeEmailId}&reply_all=true&folder=${config.activeFolder}`;
     }
 
-    // Handler for forward button
+    /**
+     * Handler for forward button
+     */
     function handleForward() {
         if (!config.activeEmailId || !config.activeFolder) {
             showNotification('No email selected', 'error');
@@ -173,12 +266,16 @@ const EmailActions = (function() {
         window.location.href = `/email/compose?forward=${config.activeEmailId}&folder=${config.activeFolder}`;
     }
 
-    // Handler for print button
+    /**
+     * Handler for print button
+     */
     function handlePrint() {
         window.print();
     }
 
-    // Handler for archive button
+    /**
+     * Handler for archive button
+     */
     function handleArchive() {
         if (!config.activeEmailId || !config.activeFolder) {
             showNotification('No email selected', 'error');
@@ -227,7 +324,9 @@ const EmailActions = (function() {
         });
     }
 
-    // Handler for mark as unread button
+    /**
+     * Handler for mark as unread button
+     */
     function handleMarkUnread() {
         if (!config.activeEmailId || !config.activeFolder) {
             showNotification('No email selected', 'error');
@@ -243,7 +342,9 @@ const EmailActions = (function() {
         }
     }
 
-    // Handler for move to folder button
+    /**
+     * Handler for move to folder button
+     */
     function handleMove() {
         if (!config.activeEmailId || !config.activeFolder) {
             showNotification('No email selected', 'error');
@@ -264,7 +365,9 @@ const EmailActions = (function() {
         }
     }
 
-    // Load folders for move dialog
+    /**
+     * Load folders for move dialog
+     */
     function loadFoldersForMove() {
         const folderSelect = document.getElementById('folderSelect');
         if (!folderSelect) return;
@@ -301,7 +404,10 @@ const EmailActions = (function() {
                         this.classList.add('selected');
 
                         // Store the selected folder path
-                        document.getElementById('moveModal').setAttribute('data-destination', this.getAttribute('data-folder'));
+                        const moveModal = document.getElementById('moveModal');
+                        if (moveModal) {
+                            moveModal.setAttribute('data-destination', this.getAttribute('data-folder'));
+                        }
                     });
                 });
             })
@@ -315,7 +421,12 @@ const EmailActions = (function() {
             });
     }
 
-    // Render folder option for move dialog
+    /**
+     * Render folder option for move dialog
+     * @param {Object} folder - Folder data
+     * @param {number} level - Nesting level
+     * @returns {string} HTML for folder option
+     */
     function renderFolderOption(folder, level) {
         let html = `
             <div class="folder-option" data-folder="${folder.path}" style="padding-left: ${level * 16 + 12}px">
@@ -333,7 +444,11 @@ const EmailActions = (function() {
         return html;
     }
 
-    // Get folder icon class
+    /**
+     * Get folder icon class
+     * @param {string} folderType - Type of folder
+     * @returns {string} FontAwesome icon class
+     */
     function getFolderIcon(folderType) {
         const iconMap = {
             'inbox': 'fa-inbox',
@@ -347,7 +462,9 @@ const EmailActions = (function() {
         return iconMap[folderType] || 'fa-folder';
     }
 
-    // Handler for delete button
+    /**
+     * Handler for delete button
+     */
     function handleDelete() {
         if (!config.activeEmailId || !config.activeFolder) {
             showNotification('No email selected', 'error');
@@ -365,7 +482,9 @@ const EmailActions = (function() {
         }
     }
 
-    // Confirm deletion handler
+    /**
+     * Confirm email deletion
+     */
     function confirmDelete() {
         const deleteModal = document.getElementById('deleteModal');
         if (!deleteModal) return;
@@ -414,7 +533,9 @@ const EmailActions = (function() {
         });
     }
 
-    // Confirm move handler
+    /**
+     * Confirm moving email to another folder
+     */
     function confirmMove() {
         const moveModal = document.getElementById('moveModal');
         if (!moveModal) return;
@@ -470,28 +591,45 @@ const EmailActions = (function() {
         });
     }
 
-    // Additional action handlers
+    /**
+     * Handle Mark as Spam action
+     * @param {Event} e - Click event
+     */
     function handleMarkSpam(e) {
         e.preventDefault();
         showNotification('Email marked as spam', 'success');
     }
 
+    /**
+     * Handle Add Star action
+     * @param {Event} e - Click event
+     */
     function handleAddStar(e) {
         e.preventDefault();
         showNotification('Star added to email', 'success');
     }
 
+    /**
+     * Handle Create Filter action
+     * @param {Event} e - Click event
+     */
     function handleCreateFilter(e) {
         e.preventDefault();
         showNotification('Filter creation not implemented', 'info');
     }
 
+    /**
+     * Handle Show Original email action
+     * @param {Event} e - Click event
+     */
     function handleShowOriginal(e) {
         e.preventDefault();
         showNotification('Showing original email', 'info');
     }
 
-    // Show loading overlay
+    /**
+     * Show loading overlay
+     */
     function showLoadingOverlay() {
         let overlay = document.querySelector('.email-loading-overlay');
         if (!overlay) {
@@ -507,7 +645,9 @@ const EmailActions = (function() {
         overlay.style.display = 'flex';
     }
 
-    // Hide loading overlay
+    /**
+     * Hide loading overlay
+     */
     function hideLoadingOverlay() {
         const overlay = document.querySelector('.email-loading-overlay');
         if (overlay) {
@@ -515,7 +655,11 @@ const EmailActions = (function() {
         }
     }
 
-    // Show notification
+    /**
+     * Show notification
+     * @param {string} message - Notification message
+     * @param {string} type - Notification type (success, error, warning, info)
+     */
     function showNotification(message, type = 'info') {
         if (typeof EmailClient !== 'undefined' && EmailClient.showToast) {
             EmailClient.showToast(message, type);
@@ -525,56 +669,7 @@ const EmailActions = (function() {
         }
     }
 
-    // Initialize
-    function init(options = {}) {
-        // Merge options
-        config.csrfToken = options.csrfToken || document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
-        config.activeEmailId = options.emailId;
-        config.activeFolder = options.folder;
-
-        // Initialize components
-        initDropdowns();
-        initTooltips();
-
-        if (config.activeEmailId && config.activeFolder) {
-            initEmailActions(config.activeEmailId, config.activeFolder);
-        }
-
-        // Set up event listeners for modals
-        document.getElementById('confirmDeleteBtn')?.addEventListener('click', confirmDelete);
-        document.getElementById('cancelDeleteBtn')?.addEventListener('click', function() {
-            document.getElementById('deleteModal').classList.remove('active');
-        });
-
-        document.getElementById('confirmMoveBtn')?.addEventListener('click', confirmMove);
-        document.getElementById('cancelMoveBtn')?.addEventListener('click', function() {
-            document.getElementById('moveModal').classList.remove('active');
-        });
-        document.getElementById('closeMoveModal')?.addEventListener('click', function() {
-            document.getElementById('moveModal').classList.remove('active');
-        });
-
-        // Close modals when clicking outside
-        const modals = document.querySelectorAll('.modal');
-        modals.forEach(modal => {
-            modal.addEventListener('click', function(e) {
-                if (e.target === this) {
-                    this.classList.remove('active');
-                }
-            });
-        });
-
-        // Handle escape key for modals
-        document.addEventListener('keydown', function(e) {
-            if (e.key === 'Escape') {
-                document.querySelectorAll('.modal.active').forEach(modal => {
-                    modal.classList.remove('active');
-                });
-            }
-        });
-    }
-
-    // Public API
+    // Return public API
     return {
         init,
         initEmailActions
@@ -645,3 +740,4 @@ document.addEventListener('DOMContentLoaded', function() {
     `;
     document.head.appendChild(style);
 });
+/*-神-*/
